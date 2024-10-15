@@ -2,6 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+/// @docImport 'package:flutter/cupertino.dart';
+/// @docImport 'package:flutter/scheduler.dart';
+///
+/// @docImport 'color_scheme.dart';
+/// @docImport 'constants.dart';
+/// @docImport 'ink_well.dart';
+/// @docImport 'material.dart';
+/// @docImport 'radio_list_tile.dart';
+/// @docImport 'scaffold.dart';
+/// @docImport 'switch_list_tile.dart';
+library;
+
 import 'package:flutter/widgets.dart';
 
 import 'checkbox.dart';
@@ -185,7 +197,7 @@ class CheckboxListTile extends StatelessWidget {
     this.dense,
     this.secondary,
     this.selected = false,
-    this.controlAffinity = ListTileControlAffinity.platform,
+    this.controlAffinity,
     this.contentPadding,
     this.tristate = false,
     this.checkboxShape,
@@ -193,6 +205,8 @@ class CheckboxListTile extends StatelessWidget {
     this.onFocusChange,
     this.enableFeedback,
     this.checkboxSemanticLabel,
+    this.checkboxScaleFactor = 1.0,
+    this.internalAddSemanticForOnTap = false,
   }) : _checkboxType = _CheckboxType.material,
        assert(tristate || value != null),
        assert(!isThreeLine || subtitle != null);
@@ -229,7 +243,7 @@ class CheckboxListTile extends StatelessWidget {
     this.dense,
     this.secondary,
     this.selected = false,
-    this.controlAffinity = ListTileControlAffinity.platform,
+    this.controlAffinity,
     this.contentPadding,
     this.tristate = false,
     this.checkboxShape,
@@ -237,6 +251,8 @@ class CheckboxListTile extends StatelessWidget {
     this.onFocusChange,
     this.enableFeedback,
     this.checkboxSemanticLabel,
+    this.checkboxScaleFactor = 1.0,
+    this.internalAddSemanticForOnTap = false,
   }) : _checkboxType = _CheckboxType.adaptive,
        assert(tristate || value != null),
        assert(!isThreeLine || subtitle != null);
@@ -403,7 +419,7 @@ class CheckboxListTile extends StatelessWidget {
   final bool selected;
 
   /// Where to place the control relative to the text.
-  final ListTileControlAffinity controlAffinity;
+  final ListTileControlAffinity? controlAffinity;
 
   /// Defines insets surrounding the tile's contents.
   ///
@@ -452,6 +468,18 @@ class CheckboxListTile extends StatelessWidget {
   /// inoperative.
   final bool? enabled;
 
+  /// Whether to add button:true to the semantics if onTap is provided.
+  /// This is a temporary flag to help changing the behavior of ListTile onTap semantics.
+  ///
+  // TODO(hangyujin): Remove this flag after fixing related g3 tests and flipping
+  // the default value to true.
+  final bool internalAddSemanticForOnTap;
+
+  /// Controls the scaling factor applied to the [Checkbox] within the [CheckboxListTile].
+  ///
+  /// Defaults to 1.0.
+  final double checkboxScaleFactor;
+
   /// {@macro flutter.material.checkbox.semanticLabel}
   final String? checkboxSemanticLabel;
 
@@ -471,7 +499,7 @@ class CheckboxListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget control;
+    Widget control;
 
     switch (_checkboxType) {
       case _CheckboxType.material:
@@ -517,11 +545,21 @@ class CheckboxListTile extends StatelessWidget {
           ),
         );
     }
+    if (checkboxScaleFactor != 1.0) {
+      control = Transform.scale(
+        scale: checkboxScaleFactor,
+        child: control,
+      );
+    }
 
-    final (Widget? leading, Widget? trailing) = switch (controlAffinity) {
+    final ListTileThemeData listTileTheme = ListTileTheme.of(context);
+    final ListTileControlAffinity effectiveControlAffinity =
+        controlAffinity ?? listTileTheme.controlAffinity ?? ListTileControlAffinity.platform;
+    final (Widget? leading, Widget? trailing) = switch (effectiveControlAffinity) {
       ListTileControlAffinity.leading => (control, secondary),
       ListTileControlAffinity.trailing || ListTileControlAffinity.platform => (secondary, control),
     };
+
     final ThemeData theme = Theme.of(context);
     final CheckboxThemeData checkboxTheme = CheckboxTheme.of(context);
     final Set<MaterialState> states = <MaterialState>{
@@ -551,6 +589,7 @@ class CheckboxListTile extends StatelessWidget {
         focusNode: focusNode,
         onFocusChange: onFocusChange,
         enableFeedback: enableFeedback,
+        internalAddSemanticForOnTap: internalAddSemanticForOnTap,
       ),
     );
   }
