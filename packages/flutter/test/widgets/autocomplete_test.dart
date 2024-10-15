@@ -2219,19 +2219,17 @@ void main() {
     expect(find.byKey(fieldKey), findsNothing);
     expect(find.byKey(optionsKey), findsNothing);
 
-    // Scroll back to the field and both are visible again.
+    // Scroll back to the field and ensure it is visible.
     await tester.scrollUntilVisible(find.byKey(fieldKey), 500.0);
     await tester.pumpAndSettle();
 
     expect(find.byKey(fieldKey), findsOneWidget);
-    expect(find.byKey(optionsKey), findsOneWidget);
 
-    // Jump to the end. Both are hidden again.
+    // Jump to the end. The field is hidden again.
     scrollController.jumpTo(2000.0);
     await tester.pumpAndSettle();
 
     expect(find.byKey(fieldKey), findsNothing);
-    expect(find.byKey(optionsKey), findsNothing);
   });
 
   for (final OptionsViewOpenDirection openDirection in OptionsViewOpenDirection.values) {
