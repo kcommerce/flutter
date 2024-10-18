@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -2143,7 +2144,7 @@ void main() {
     });
   });
 
-  testWidgets('when field scrolled offscreen, options are hidden', (WidgetTester tester) async {
+  testWidgets('when field scrolled offscreen, options are hidden and not reshown when scrolled back on desktop and web', (WidgetTester tester) async {
     final GlobalKey fieldKey = GlobalKey();
     final GlobalKey optionsKey = GlobalKey();
     final ScrollController scrollController = ScrollController();
@@ -2223,14 +2224,109 @@ void main() {
     await tester.scrollUntilVisible(find.byKey(fieldKey), 500.0);
     await tester.pumpAndSettle();
 
+    // The options are no longer visible on desktop and web.
     expect(find.byKey(fieldKey), findsOneWidget);
+    expect(find.byKey(optionsKey), findsNothing);
 
     // Jump to the end. The field is hidden again.
     scrollController.jumpTo(2000.0);
     await tester.pumpAndSettle();
 
     expect(find.byKey(fieldKey), findsNothing);
-  });
+    expect(find.byKey(optionsKey), findsNothing);
+  }, variant: TargetPlatformVariant.desktop());
+
+  testWidgets('when field scrolled offscreen, options are hidden and reshown when scrolled back on mobile', (WidgetTester tester) async {
+    final GlobalKey fieldKey = GlobalKey();
+    final GlobalKey optionsKey = GlobalKey();
+    final ScrollController scrollController = ScrollController();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ListView(
+            controller: scrollController,
+            children: <Widget>[
+              const SizedBox(height: 1000.0),
+              RawAutocomplete<String>(
+                optionsBuilder: (TextEditingValue textEditingValue) {
+                  return kOptions.where((String option) {
+                    return option.contains(textEditingValue.text.toLowerCase());
+                  });
+                },
+                optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
+                  return ListView.builder(
+                    key: optionsKey,
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final String option = options.elementAt(index);
+                      return InkWell(
+                        onTap: () {
+                          onSelected(option);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(option),
+                        ),
+                      );
+                    },
+                  );
+                },
+                fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onSubmitted) {
+                  return TextField(
+                    key: fieldKey,
+                    focusNode: focusNode,
+                    controller: textEditingController,
+                  );
+                },
+              ),
+              const SizedBox(height: 1000.0),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(fieldKey), findsNothing);
+    expect(find.byKey(optionsKey), findsNothing);
+
+    await tester.scrollUntilVisible(find.byKey(fieldKey), 500.0);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(fieldKey), findsOneWidget);
+    expect(find.byKey(optionsKey), findsNothing);
+
+    await tester.tap(find.byKey(fieldKey));
+    await tester.pump();
+
+    expect(find.byKey(fieldKey), findsOneWidget);
+    expect(find.byKey(optionsKey), findsOneWidget);
+
+    // Jump to the beginning. The field is off screen and the options are not
+    // showing either.
+    scrollController.jumpTo(0.0);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(fieldKey), findsNothing);
+    expect(find.byKey(optionsKey), findsNothing);
+
+    // Scroll back to the field and ensure it is visible.
+    await tester.scrollUntilVisible(find.byKey(fieldKey), 500.0);
+    await tester.pumpAndSettle();
+
+    // The options remain visible on mobile, but not on web.
+    expect(find.byKey(fieldKey), findsOneWidget);
+    kIsWeb ? expect(find.byKey(fieldKey), findsNothing) : expect(find.byKey(fieldKey), findsOneWidget);
+
+    // Jump to the end. The field is hidden again.
+    scrollController.jumpTo(2000.0);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(fieldKey), findsNothing);
+    expect(find.byKey(fieldKey), findsNothing);
+  }, variant: TargetPlatformVariant.mobile());
 
   for (final OptionsViewOpenDirection openDirection in OptionsViewOpenDirection.values) {
     testWidgets('when not enough room for options, options cover field ($openDirection)', (WidgetTester tester) async {
