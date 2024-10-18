@@ -2318,14 +2318,14 @@ void main() {
 
     // The options remain visible on mobile, but not on web.
     expect(find.byKey(fieldKey), findsOneWidget);
-    kIsWeb ? expect(find.byKey(fieldKey), findsNothing) : expect(find.byKey(fieldKey), findsOneWidget);
+    kIsWeb ? expect(find.byKey(optionsKey), findsNothing) : expect(find.byKey(optionsKey), findsOneWidget);
 
     // Jump to the end. The field is hidden again.
     scrollController.jumpTo(2000.0);
     await tester.pumpAndSettle();
 
     expect(find.byKey(fieldKey), findsNothing);
-    expect(find.byKey(fieldKey), findsNothing);
+    expect(find.byKey(optionsKey), findsNothing);
   }, variant: TargetPlatformVariant.mobile());
 
   for (final OptionsViewOpenDirection openDirection in OptionsViewOpenDirection.values) {
