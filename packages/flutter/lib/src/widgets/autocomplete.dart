@@ -612,6 +612,8 @@ class _OptionsState extends State<_Options> {
   Widget build(BuildContext context) {
     return CompositedTransformFollower(
       link: widget.optionsLayerLink,
+      targetAnchor: Alignment.centerLeft,
+      followerAnchor: Alignment.centerLeft,
       // When the field goes offscreen, don't show the options.
       showWhenUnlinked: false,
       child: CustomSingleChildLayout(
@@ -698,17 +700,18 @@ class _OptionsLayoutDelegate extends SingleChildLayoutDelegate {
     assert(fieldSize != null && fieldSize!.isFinite);
     assert(fieldOffset != null && fieldOffset!.isFinite);
 
+    final double origin = size.height / 2 - fieldSize!.height / 2;
     final double dy = switch (optionsViewOpenDirection) {
-      OptionsViewOpenDirection.down => fieldSize!.height,
-      OptionsViewOpenDirection.up => -childSize.height,
+      OptionsViewOpenDirection.down => origin + fieldSize!.height,
+      OptionsViewOpenDirection.up => origin - childSize.height,
     };
-    final double maxDy = max(0.0, size.height - childSize.height - fieldOffset!.dy);
+    final double maxDy = max(origin, origin + size.height - childSize.height - fieldOffset!.dy);
     return Offset(
       switch (textDirection) {
         TextDirection.ltr => 0.0,
         TextDirection.rtl => fieldSize!.width - childSize.width,
       },
-      clampDouble(dy, -fieldOffset!.dy, maxDy),
+      clampDouble(dy, origin - fieldOffset!.dy, maxDy),
     );
   }
 
