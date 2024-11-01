@@ -828,10 +828,11 @@ void main() {
     await tester.pump();
     final Offset fieldOffsetFrame1 = tester.getTopLeft(find.byKey(fieldKey));
     final Offset optionsTopLeftOpenFrame1 = tester.getTopLeft(find.byKey(optionsKey));
-    // TODO(justinmc): The options don't move when alignment changes like this :(
+
     expect(fieldOffsetFrame1.dy, lessThan(fieldOffset.dy));
     expect(optionsTopLeftOpenFrame1.dy, isNot(equals(optionsTopLeft.dy)));
     expect(optionsTopLeftOpenFrame1.dy, fieldOffsetFrame1.dy + fieldSize.height);
+
     await tester.pump();
   });
 

@@ -311,10 +311,8 @@ class _RawAutocompleteState<T extends Object> extends State<RawAutocomplete<T>> 
   final LayerLink _optionsLayerLink = LayerLink();
   final GlobalKey _fieldKey = GlobalKey(debugLabel: kReleaseMode ? null : 'AutocompleteFieldView');
 
-  // TODO(justinmc): Maybe no longer needed?
   // The box constraints that the field was last built with.
-  final ValueNotifier<BoxConstraints> _fieldBoxConstraints =
-      ValueNotifier<BoxConstraints>(const BoxConstraints());
+  final ValueNotifier<BoxConstraints> _fieldBoxConstraints = ValueNotifier<BoxConstraints>(const BoxConstraints());
 
   final OverlayPortalController _optionsViewController = OverlayPortalController(debugLabel: '_RawAutocompleteState');
 
