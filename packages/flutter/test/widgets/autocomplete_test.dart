@@ -179,16 +179,16 @@ void main() {
                   key: optionsKey,
                   elevation: 4.0,
                   child: ListView(
-                    children: options
-                        .map((String option) => GestureDetector(
-                              onTap: () {
-                                onSelected(option);
-                              },
-                              child: ListTile(
-                                title: Text(option),
-                              ),
-                            ))
-                        .toList(),
+                    children: options.map((String option) =>
+                      GestureDetector(
+                        onTap: () {
+                          onSelected(option);
+                        },
+                        child: ListTile(
+                          title: Text(option),
+                        ),
+                      ),
+                    ).toList(),
                   ),
                 );
               },
@@ -324,6 +324,261 @@ void main() {
       expect(find.byKey(optionsKey), findsNothing);
 
       expect(textEditingController.text, equals(kOptions[2]));
+    });
+
+    testWidgets('when not enough room for options, options cover field ($openDirection)', (WidgetTester tester) async {
+      const double padding = 32.0;
+      final GlobalKey fieldKey = GlobalKey();
+      final GlobalKey optionsKey = GlobalKey();
+      late StateSetter setState;
+      Alignment alignment = Alignment.bottomCenter;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (BuildContext context, StateSetter setter) {
+                setState = setter;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: padding),
+                  child: Align(
+                    alignment: alignment,
+                    child: RawAutocomplete<String>(
+                      optionsViewOpenDirection: openDirection,
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                        return kOptions.where((String option) {
+                          return option.contains(textEditingValue.text.toLowerCase());
+                        });
+                      },
+                      optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
+                        return ListView.builder(
+                          key: optionsKey,
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: options.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            final String option = options.elementAt(index);
+                            return InkWell(
+                              onTap: () {
+                                onSelected(option);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Text(option),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onSubmitted) {
+                        return TextField(
+                          key: fieldKey,
+                          focusNode: focusNode,
+                          controller: textEditingController,
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(fieldKey), findsOneWidget);
+      expect(find.byKey(optionsKey), findsNothing);
+
+      await tester.tap(find.byKey(fieldKey));
+      await tester.pump();
+
+      expect(find.byKey(fieldKey), findsOneWidget);
+      expect(find.byKey(optionsKey), findsOneWidget);
+
+      await tester.enterText(find.byKey(fieldKey), 'go'); // 3 results.
+      await tester.pump();
+
+      switch (openDirection) {
+        case OptionsViewOpenDirection.up:
+          // Options are positioned and sized like normal.
+          expect(find.byType(InkWell), findsNWidgets(3));
+          final double optionHeight = tester.getSize(find.byType(InkWell).first).height;
+          final double topOfField = tester.getTopLeft(find.byKey(fieldKey)).dy;
+          expect(
+            tester.getTopLeft(find.byType(InkWell).first),
+            Offset(padding, topOfField - 3 * optionHeight),
+          );
+          expect(
+            tester.getBottomLeft(find.byType(InkWell).at(2)),
+            Offset(padding, topOfField),
+          );
+        case OptionsViewOpenDirection.down:
+          expect(find.byType(InkWell), findsNWidgets(1));
+          final Size optionsSize = tester.getSize(find.byKey(optionsKey));
+          expect(optionsSize.height, kMinInteractiveDimension);
+          // Options are positioned as low as possible while still fitting on screen.
+          final double bottomOfField = tester.getBottomLeft(find.byKey(optionsKey)).dy;
+          expect(
+            tester.getTopLeft(find.byKey(optionsKey)),
+            Offset(padding, bottomOfField - optionsSize.height),
+          );
+      }
+
+      setState(() {
+        alignment = Alignment.topCenter;
+      });
+
+      // One frame for the field to move and one frame for the options to
+      // follow.
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(fieldKey), findsOneWidget);
+      expect(find.byKey(optionsKey), findsOneWidget);
+
+      switch (openDirection) {
+        case OptionsViewOpenDirection.up:
+          // Options are positioned as high as possible while still fitting on
+          // the screen.
+          expect(find.byType(InkWell), findsNWidgets(1));
+          final Size optionsSize = tester.getSize(find.byKey(optionsKey));
+          expect(optionsSize.height, kMinInteractiveDimension);
+          expect(
+            tester.getTopLeft(find.byKey(optionsKey)),
+            const Offset(padding, 0.0),
+          );
+          expect(
+            tester.getBottomLeft(find.byKey(optionsKey)),
+            Offset(padding, optionsSize.height),
+          );
+        case OptionsViewOpenDirection.down:
+          // Options are positioned and sized like normal.
+          expect(find.byType(InkWell), findsNWidgets(3));
+          final double optionHeight = tester.getSize(find.byType(InkWell).first).height;
+          final double bottomOfField = tester.getBottomLeft(find.byKey(fieldKey)).dy;
+          expect(
+            tester.getTopLeft(find.byType(InkWell).first),
+            Offset(padding, bottomOfField),
+          );
+          expect(
+            tester.getBottomLeft(find.byType(InkWell).at(2)),
+            Offset(padding, bottomOfField + 3 * optionHeight),
+          );
+      }
+    });
+
+    testWidgets('correct options alignment for RTL in direction $openDirection', (WidgetTester tester) async {
+      final GlobalKey fieldKey = GlobalKey();
+      final GlobalKey optionsKey = GlobalKey();
+      const double kOptionsWidth = 100.0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: RawAutocomplete<String>(
+                  optionsViewOpenDirection: openDirection,
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    return kOptions.where((String option) {
+                      return option.contains(textEditingValue.text.toLowerCase());
+                    });
+                  },
+                  fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onSubmitted) {
+                    return TextField(
+                      key: fieldKey,
+                      focusNode: focusNode,
+                      controller: textEditingController,
+                    );
+                  },
+                  optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
+                    return SizedBox(
+                      width: kOptionsWidth,
+                      key: optionsKey,
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(fieldKey), findsOneWidget);
+      expect(find.byKey(optionsKey), findsNothing);
+
+      await tester.tap(find.byType(TextField));
+      await tester.pump();
+
+      expect(find.byKey(fieldKey), findsOneWidget);
+      expect(find.byKey(optionsKey), findsOneWidget);
+
+      final RenderBox optionsBox = tester.renderObject(find.byKey(optionsKey));
+      expect(optionsBox.size.width, kOptionsWidth);
+      expect(
+        tester.getTopRight(find.byKey(optionsKey)).dx,
+        tester.getTopRight(find.byKey(fieldKey)).dx,
+      );
+    });
+
+    testWidgets('options width matches field width with open direction $openDirection', (WidgetTester tester) async {
+      final GlobalKey fieldKey = GlobalKey();
+      final GlobalKey optionsKey = GlobalKey();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Center(
+                child: RawAutocomplete<String>(
+                  optionsViewOpenDirection: openDirection,
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    return kOptions.where((String option) {
+                      return option.contains(textEditingValue.text.toLowerCase());
+                    });
+                  },
+                  fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onSubmitted) {
+                    return TextField(
+                      key: fieldKey,
+                      focusNode: focusNode,
+                      controller: textEditingController,
+                    );
+                  },
+                  optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
+                    return Container(key: optionsKey);
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(fieldKey), findsOneWidget);
+      expect(find.byKey(optionsKey), findsNothing);
+
+      await tester.tap(find.byType(TextField));
+      // Two pumps required due to post frame callback.
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(fieldKey), findsOneWidget);
+      expect(find.byKey(optionsKey), findsOneWidget);
+
+      final RenderBox fieldBox = tester.renderObject(find.byKey(fieldKey));
+      final RenderBox optionsBox = tester.renderObject(find.byKey(optionsKey));
+      expect(optionsBox.size.width, equals(fieldBox.size.width));
+      expect(
+        tester.getTopLeft(find.byKey(optionsKey)).dy,
+        switch (openDirection) {
+          OptionsViewOpenDirection.down =>
+            tester.getTopLeft(find.byKey(fieldKey)).dy + fieldBox.size.height,
+          OptionsViewOpenDirection.up =>
+            tester.getTopLeft(find.byKey(fieldKey)).dy - optionsBox.size.height,
+        },
+      );
     });
   }
 
@@ -626,62 +881,6 @@ void main() {
         offsetMoreOrLessEquals(tester.getBottomLeft(find.text('a'))));
     });
 
-    for (final OptionsViewOpenDirection direction in OptionsViewOpenDirection.values) {
-      testWidgets('correct options alignment for RTL in direction $direction', (WidgetTester tester) async {
-        final GlobalKey fieldKey = GlobalKey();
-        final GlobalKey optionsKey = GlobalKey();
-        const double kOptionsWidth = 100.0;
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: Directionality(
-                textDirection: TextDirection.rtl,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                  child: RawAutocomplete<String>(
-                    optionsViewOpenDirection: direction,
-                    optionsBuilder: (TextEditingValue textEditingValue) {
-                      return kOptions.where((String option) {
-                        return option.contains(textEditingValue.text.toLowerCase());
-                      });
-                    },
-                    fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onSubmitted) {
-                      return TextField(
-                        key: fieldKey,
-                        focusNode: focusNode,
-                        controller: textEditingController,
-                      );
-                    },
-                    optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
-                      return SizedBox(
-                        width: kOptionsWidth,
-                        key: optionsKey,
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-
-        expect(find.byKey(fieldKey), findsOneWidget);
-        expect(find.byKey(optionsKey), findsNothing);
-
-        await tester.tap(find.byType(TextField));
-        await tester.pumpAndSettle();
-
-        expect(find.byKey(fieldKey), findsOneWidget);
-        expect(find.byKey(optionsKey), findsOneWidget);
-        final RenderBox optionsBox = tester.renderObject(find.byKey(optionsKey));
-        expect(optionsBox.size.width, kOptionsWidth);
-        expect(
-          tester.getTopRight(find.byKey(optionsKey)).dx,
-          tester.getTopRight(find.byKey(fieldKey)).dx,
-        );
-      });
-    }
-
     group('fieldViewBuilder not passed', () {
       testWidgets('down', (WidgetTester tester) async {
         final GlobalKey autocompleteKey = GlobalKey();
@@ -832,8 +1031,6 @@ void main() {
     expect(fieldOffsetFrame1.dy, lessThan(fieldOffset.dy));
     expect(optionsTopLeftOpenFrame1.dy, isNot(equals(optionsTopLeft.dy)));
     expect(optionsTopLeftOpenFrame1.dy, fieldOffsetFrame1.dy + fieldSize.height);
-
-    await tester.pump();
   });
 
   testWidgets('options are shown one frame after tapping in field', (WidgetTester tester) async {
@@ -1535,64 +1732,6 @@ void main() {
     expect(find.byKey(optionsKey), findsNothing);
   });
 
-  for (final OptionsViewOpenDirection direction in OptionsViewOpenDirection.values) {
-    testWidgets('options width matches field width with open direction $direction', (WidgetTester tester) async {
-      final GlobalKey fieldKey = GlobalKey();
-      final GlobalKey optionsKey = GlobalKey();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Center(
-                child: RawAutocomplete<String>(
-                  optionsViewOpenDirection: direction,
-                  optionsBuilder: (TextEditingValue textEditingValue) {
-                    return kOptions.where((String option) {
-                      return option.contains(textEditingValue.text.toLowerCase());
-                    });
-                  },
-                  fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onSubmitted) {
-                    return TextField(
-                      key: fieldKey,
-                      focusNode: focusNode,
-                      controller: textEditingController,
-                    );
-                  },
-                  optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
-                    return Container(key: optionsKey);
-                  },
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      expect(find.byKey(fieldKey), findsOneWidget);
-      expect(find.byKey(optionsKey), findsNothing);
-
-      await tester.tap(find.byType(TextField));
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(fieldKey), findsOneWidget);
-      expect(find.byKey(optionsKey), findsOneWidget);
-      final RenderBox fieldBox = tester.renderObject(find.byKey(fieldKey));
-      final RenderBox optionsBox = tester.renderObject(find.byKey(optionsKey));
-      expect(optionsBox.size.width, equals(fieldBox.size.width));
-      expect(
-        tester.getTopLeft(find.byKey(optionsKey)).dy,
-        switch (direction) {
-          OptionsViewOpenDirection.down =>
-            tester.getTopLeft(find.byKey(fieldKey)).dy + fieldBox.size.height,
-          OptionsViewOpenDirection.up =>
-            tester.getTopLeft(find.byKey(fieldKey)).dy - optionsBox.size.height,
-        },
-      );
-    });
-  }
-
   testWidgets('options width matches field width after rebuilding', (WidgetTester tester) async {
     final GlobalKey fieldKey = GlobalKey();
     final GlobalKey optionsKey = GlobalKey();
@@ -1636,29 +1775,31 @@ void main() {
 
     expect(find.byKey(fieldKey), findsOneWidget);
     expect(find.byKey(optionsKey), findsNothing);
-    RenderBox fieldBox = tester.renderObject(find.byKey(fieldKey));
+
+    final RenderBox fieldBox = tester.renderObject(find.byKey(fieldKey));
     expect(fieldBox.size.width, 100.0);
 
     await tester.tap(find.byType(TextField));
-    await tester.pumpAndSettle();
+    await tester.pump();
+
     expect(find.byKey(fieldKey), findsOneWidget);
     expect(find.byKey(optionsKey), findsOneWidget);
-    fieldBox = tester.renderObject(find.byKey(fieldKey));
-    RenderBox optionsBox = tester.renderObject(find.byKey(optionsKey));
-    expect(fieldBox.size.width, 100.0);
+
+    final RenderBox optionsBox = tester.renderObject(find.byKey(optionsKey));
     expect(optionsBox.size.width, 100.0);
 
     setState(() {
       width = 200.0;
     });
-    // Two pumps required due to post frame callback.
-    await tester.pump();
     await tester.pump();
 
-    expect(find.byKey(fieldKey), findsOneWidget);
-    expect(find.byKey(optionsKey), findsOneWidget);
-    fieldBox = tester.renderObject(find.byKey(fieldKey));
-    optionsBox = tester.renderObject(find.byKey(optionsKey));
+    // The field width changes, but the options width is scheduled to change in
+    // the next frame.
+    expect(fieldBox.size.width, 200.0);
+    expect(optionsBox.size.width, 100.0);
+    await tester.pump();
+
+    // The options width finally changes to match the field width.
     expect(fieldBox.size.width, 200.0);
     expect(optionsBox.size.width, 200.0);
   });
@@ -1707,29 +1848,32 @@ void main() {
 
     expect(find.byKey(fieldKey), findsOneWidget);
     expect(find.byKey(optionsKey), findsNothing);
-    RenderBox fieldBox = tester.renderObject(find.byKey(fieldKey));
+
+    final RenderBox fieldBox = tester.renderObject(find.byKey(fieldKey));
     expect(fieldBox.size.width, 100.0);
 
     await tester.tap(find.byType(TextField));
-    await tester.pumpAndSettle();
+    await tester.pump();
+
     expect(find.byKey(fieldKey), findsOneWidget);
     expect(find.byKey(optionsKey), findsOneWidget);
-    fieldBox = tester.renderObject(find.byKey(fieldKey));
-    RenderBox optionsBox = tester.renderObject(find.byKey(optionsKey));
+
+    final RenderBox optionsBox = tester.renderObject(find.byKey(optionsKey));
     expect(fieldBox.size.width, 100.0);
     expect(optionsBox.size.width, 100.0);
 
     setState(() {
       width = 200.0;
     });
-    // Two pumps required due to post frame callback.
-    await tester.pump();
     await tester.pump();
 
-    expect(find.byKey(fieldKey), findsOneWidget);
-    expect(find.byKey(optionsKey), findsOneWidget);
-    fieldBox = tester.renderObject(find.byKey(fieldKey));
-    optionsBox = tester.renderObject(find.byKey(optionsKey));
+    // The field width changes, but the options width is scheduled to change in
+    // the next frame.
+    expect(fieldBox.size.width, 200.0);
+    expect(optionsBox.size.width, 100.0);
+    await tester.pump();
+
+    // The options width finally changes to match the field width.
     expect(fieldBox.size.width, 200.0);
     expect(optionsBox.size.width, 200.0);
   });
@@ -1816,6 +1960,7 @@ void main() {
       expect(find.byKey(fieldKey), findsOneWidget);
       expect(find.byKey(optionsKey), findsOneWidget);
       expect(find.byType(InkWell), findsNWidgets(kOptions.length));
+
       final Size fieldSize1 = tester.getSize(find.byKey(fieldKey));
       final Offset optionsTopLeft1 = tester.getTopLeft(find.byKey(optionsKey));
       expect(
@@ -1886,6 +2031,7 @@ void main() {
       expect(find.byKey(fieldKey), findsOneWidget);
       expect(find.byKey(optionsKey), findsOneWidget);
       expect(find.byType(InkWell), findsNWidgets(kOptions.length));
+
       final Size fieldSize1 = tester.getSize(find.byKey(fieldKey));
       final Offset optionsTopLeft1 = tester.getTopLeft(find.byKey(optionsKey));
       expect(
@@ -1911,8 +2057,8 @@ void main() {
       tester.view.physicalSize = wideWindowSize;
       tester.view.devicePixelRatio = 1.0;
       await tester.pumpAndSettle();
-
       expect(find.byKey(fieldKey), findsOneWidget);
+
       final int visibleOptions = (wideWindowSize.height / optionHeight).floor();
       expect(visibleOptions, lessThan(kOptions.length));
       expect(find.byType(InkWell), findsNWidgets(visibleOptions));
@@ -1956,9 +2102,9 @@ void main() {
 
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
-
       expect(find.byKey(fieldKey), findsOneWidget);
       expect(find.byKey(optionsKey), findsOneWidget);
+
       final double optionHeight = tester.getSize(find.byType(InkWell).first).height;
       final double optionsHeight1 = tester.getSize(find.byKey(optionsKey)).height;
       final int visibleOptions1 = (optionsHeight1 / optionHeight).ceil();
@@ -1988,8 +2134,8 @@ void main() {
       tester.view.physicalSize = wideWindowSize;
       tester.view.devicePixelRatio = 1.0;
       await tester.pumpAndSettle();
-
       expect(find.byKey(fieldKey), findsOneWidget);
+
       final double optionsHeight2 = tester.getSize(find.byKey(optionsKey)).height;
       final int visibleOptions2 = (optionsHeight2 / optionHeight).ceil();
       expect(visibleOptions2, lessThan(kOptions.length));
@@ -2012,19 +2158,19 @@ void main() {
       );
 
       // Shrink the screen further so that the options become smaller than
-      // _kMinUsableHeight and move to overlap the field.
+      // kMinInteractiveDimension and move to overlap the field.
       const Size shortWindowSize = Size(1920.0, 90.0);
       tester.view.physicalSize = shortWindowSize;
       tester.view.devicePixelRatio = 1.0;
       await tester.pumpAndSettle();
-
       expect(find.byKey(fieldKey), findsOneWidget);
+
       const int visibleOptions3 = 1;
       expect(find.byType(InkWell), findsNWidgets(visibleOptions3));
       final Offset optionsTopLeft3 = tester.getTopLeft(find.byKey(optionsKey));
       expect(optionsTopLeft3.dx, optionsTopLeft1.dx);
       // The options have moved up, overlapping the field, to still be able to
-      // show _kMinUsableHeight.
+      // show kMinInteractiveDimension.
       expect(optionsTopLeft3.dy, lessThan(optionsTopLeft1.dy));
       final Size fieldSize3 = tester.getSize(find.byKey(fieldKey));
       final Offset fieldTopLeft3 = tester.getTopLeft(find.byKey(fieldKey));
@@ -2066,9 +2212,9 @@ void main() {
 
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
-
       expect(find.byKey(fieldKey), findsOneWidget);
       expect(find.byKey(optionsKey), findsOneWidget);
+
       final double optionHeight = tester.getSize(find.byType(InkWell).first).height;
       final double optionsHeight1 = tester.getSize(find.byKey(optionsKey)).height;
       final int visibleOptions1 = (optionsHeight1 / optionHeight).ceil();
@@ -2099,8 +2245,8 @@ void main() {
       tester.view.physicalSize = wideWindowSize;
       tester.view.devicePixelRatio = 1.0;
       await tester.pumpAndSettle();
-
       expect(find.byKey(fieldKey), findsOneWidget);
+
       final double optionsHeight2 = tester.getSize(find.byKey(optionsKey)).height;
       expect(optionsHeight2, lessThan(optionsHeight1));
       final int visibleOptions2 = (optionsHeight2 / optionHeight).ceil();
@@ -2129,7 +2275,7 @@ void main() {
       );
 
       // Shrink the screen further so that the options become smaller than
-      // _kMinUsableHeight and move to overlap the field.
+      // kMinInteractiveDimension and move to overlap the field.
       const Size shortWindowSize = Size(1920.0, 90.0);
       tester.view.physicalSize = shortWindowSize;
       tester.view.devicePixelRatio = 1.0;
@@ -2141,7 +2287,7 @@ void main() {
       final Offset optionsTopLeft3 = tester.getTopLeft(find.byKey(optionsKey));
       expect(optionsTopLeft3.dx, optionsTopLeft1.dx);
       // The options have moved down, overlapping the field, to still be able to
-      // show _kMinUsableHeight.
+      // show kMinInteractiveDimension.
       expect(optionsTopLeft3.dy, lessThan(optionsTopLeft1.dy));
       final Size fieldSize3 = tester.getSize(find.byKey(fieldKey));
       final Offset fieldTopLeft3 = tester.getTopLeft(find.byKey(fieldKey));
@@ -2338,150 +2484,6 @@ void main() {
     expect(find.byKey(fieldKey), findsNothing);
     expect(find.byKey(optionsKey), findsNothing);
   }, variant: TargetPlatformVariant.mobile());
-
-  for (final OptionsViewOpenDirection openDirection in OptionsViewOpenDirection.values) {
-    testWidgets('when not enough room for options, options cover field ($openDirection)', (WidgetTester tester) async {
-      const double padding = 32.0;
-      final GlobalKey fieldKey = GlobalKey();
-      final GlobalKey optionsKey = GlobalKey();
-      late StateSetter setState;
-      Alignment alignment = Alignment.bottomCenter;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: StatefulBuilder(
-              builder: (BuildContext context, StateSetter setter) {
-                setState = setter;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: padding),
-                  child: Align(
-                    alignment: alignment,
-                    child: RawAutocomplete<String>(
-                      optionsViewOpenDirection: openDirection,
-                      optionsBuilder: (TextEditingValue textEditingValue) {
-                        return kOptions.where((String option) {
-                          return option.contains(textEditingValue.text.toLowerCase());
-                        });
-                      },
-                      optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
-                        return ListView.builder(
-                          key: optionsKey,
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          itemCount: options.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            final String option = options.elementAt(index);
-                            return InkWell(
-                              onTap: () {
-                                onSelected(option);
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Text(option),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onSubmitted) {
-                        return TextField(
-                          key: fieldKey,
-                          focusNode: focusNode,
-                          controller: textEditingController,
-                        );
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      );
-
-      expect(find.byKey(fieldKey), findsOneWidget);
-      expect(find.byKey(optionsKey), findsNothing);
-
-      await tester.tap(find.byKey(fieldKey));
-      await tester.pump();
-
-      expect(find.byKey(fieldKey), findsOneWidget);
-      expect(find.byKey(optionsKey), findsOneWidget);
-
-      await tester.enterText(find.byKey(fieldKey), 'go'); // 3 results.
-      await tester.pump();
-
-      const double kMinUsableHeight = 52.0; // From _OptionsLayoutDelegate.
-      switch (openDirection) {
-        case OptionsViewOpenDirection.up:
-          // Options are positioned and sized like normal.
-          expect(find.byType(InkWell), findsNWidgets(3));
-          final double optionHeight = tester.getSize(find.byType(InkWell).first).height;
-          final double topOfField = tester.getTopLeft(find.byKey(fieldKey)).dy;
-          expect(
-            tester.getTopLeft(find.byType(InkWell).first),
-            Offset(padding, topOfField - 3 * optionHeight),
-          );
-          expect(
-            tester.getBottomLeft(find.byType(InkWell).at(2)),
-            Offset(padding, topOfField),
-          );
-        case OptionsViewOpenDirection.down:
-          expect(find.byType(InkWell), findsNWidgets(1));
-          final Size optionsSize = tester.getSize(find.byKey(optionsKey));
-          expect(optionsSize.height, kMinUsableHeight);
-          // Options are positioned as low as possible while still fitting on screen.
-          final double bottomOfField = tester.getBottomLeft(find.byKey(optionsKey)).dy;
-          expect(
-            tester.getTopLeft(find.byKey(optionsKey)),
-            Offset(padding, bottomOfField - optionsSize.height),
-          );
-      }
-
-      setState(() {
-        alignment = Alignment.topCenter;
-      });
-
-      // One frame for the field to move and one frame for the options to
-      // follow.
-      await tester.pump();
-      await tester.pump();
-
-      expect(find.byKey(fieldKey), findsOneWidget);
-      expect(find.byKey(optionsKey), findsOneWidget);
-
-      switch (openDirection) {
-        case OptionsViewOpenDirection.up:
-          // Options are positioned as high as possible while still fitting on
-          // the screen.
-          expect(find.byType(InkWell), findsNWidgets(1));
-          final Size optionsSize = tester.getSize(find.byKey(optionsKey));
-          expect(optionsSize.height, kMinUsableHeight);
-          expect(
-            tester.getTopLeft(find.byKey(optionsKey)),
-            const Offset(padding, 0.0),
-          );
-          expect(
-            tester.getBottomLeft(find.byKey(optionsKey)),
-            Offset(padding, optionsSize.height),
-          );
-        case OptionsViewOpenDirection.down:
-          // Options are positioned and sized like normal.
-          expect(find.byType(InkWell), findsNWidgets(3));
-          final double optionHeight = tester.getSize(find.byType(InkWell).first).height;
-          final double bottomOfField = tester.getBottomLeft(find.byKey(fieldKey)).dy;
-          expect(
-            tester.getTopLeft(find.byType(InkWell).first),
-            Offset(padding, bottomOfField),
-          );
-          expect(
-            tester.getBottomLeft(find.byType(InkWell).at(2)),
-            Offset(padding, bottomOfField + 3 * optionHeight),
-          );
-      }
-    });
-  }
 
   testWidgets('can prevent older optionsBuilder results from replacing the new ones', (WidgetTester tester) async {
     final GlobalKey fieldKey = GlobalKey();

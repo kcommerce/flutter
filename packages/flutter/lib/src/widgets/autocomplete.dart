@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 
 import 'actions.dart';
 import 'basic.dart';
+import 'constants.dart';
 import 'editable_text.dart';
 import 'focus_manager.dart';
 import 'framework.dart';
@@ -513,6 +514,9 @@ class _RawAutocompleteState<T extends Object> extends State<RawAutocomplete<T>> 
       child: TextFieldTapRegion(
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints boxConstraints) {
+            // A post frame callback is used to get the field constraints so
+            // that the options view overlay is rebuilt when the field
+            // constraints change.
             SchedulerBinding.instance.addPostFrameCallback((Duration duration) {
               if (!mounted) {
                 return;
@@ -571,7 +575,7 @@ class _OptionsState extends State<_Options> {
     return fieldRenderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
   }
 
-  void onLeaderComposition(Layer leaderLayer) {
+  void _onLeaderComposition(Layer leaderLayer) {
     SchedulerBinding.instance.addPostFrameCallback((Duration duration) {
       if (!mounted) {
         return;
@@ -588,7 +592,7 @@ class _OptionsState extends State<_Options> {
   @override
   void initState() {
     super.initState();
-    removeCompositionCallback = widget.optionsLayerLink.leader?.addCompositionCallback(onLeaderComposition);
+    removeCompositionCallback = widget.optionsLayerLink.leader?.addCompositionCallback(_onLeaderComposition);
   }
 
   @override
@@ -596,7 +600,7 @@ class _OptionsState extends State<_Options> {
     super.didUpdateWidget(oldWidget);
     if (widget.optionsLayerLink.leader != oldWidget.optionsLayerLink.leader) {
       removeCompositionCallback?.call();
-      removeCompositionCallback = widget.optionsLayerLink.leader?.addCompositionCallback(onLeaderComposition);
+      removeCompositionCallback = widget.optionsLayerLink.leader?.addCompositionCallback(_onLeaderComposition);
     }
   }
 
@@ -657,15 +661,6 @@ class _OptionsLayoutDelegate extends SingleChildLayoutDelegate {
   /// The [TextDirection] of this part of the widget tree.
   final TextDirection textDirection;
 
-  // Eyeballed to be big enough for about one item in the default
-  // Autocomplete.optionsViewBuilder. The assumption is that the user likely
-  // wants the list of options to move to stay on the screen rather than get any
-  // smaller than this. Allows Autocomplete to work when it has very little
-  // screen height available (as in b/317115348) by positioning itself on top of
-  // the field, while in other cases to size itself based on the height under
-  // the field.
-  static const double _kMinUsableHeight = 52.0;
-
   // Limits the child to the space above/below the field, with a minimum, and
   // with the same maxWidth constraint as the field has.
   @override
@@ -681,10 +676,10 @@ class _OptionsLayoutDelegate extends SingleChildLayoutDelegate {
       maxWidth: fieldSize!.width == 0.0 ? constraints.maxWidth : fieldSize!.width,
       maxHeight: switch (optionsViewOpenDirection) {
         OptionsViewOpenDirection.down => max(
-          min(_kMinUsableHeight, constraints.maxHeight),
+          min(kMinInteractiveDimension, constraints.maxHeight),
           constraints.maxHeight - fieldOffset!.dy - fieldSize!.height,
         ),
-        OptionsViewOpenDirection.up => max(_kMinUsableHeight, fieldOffset!.dy),
+        OptionsViewOpenDirection.up => max(kMinInteractiveDimension, fieldOffset!.dy),
       },
     );
   }
