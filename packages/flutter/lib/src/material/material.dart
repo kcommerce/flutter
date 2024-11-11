@@ -91,7 +91,7 @@ typedef MaterialInkController = SplashController;
 ///
 /// Splash effects can be painted on an ancestor [Material] widget by obtaining
 /// an instance of this controller via [Material.of] and calling [addSplash].
-extension type SplashController._(_RenderSplashes _renderSplashes) {
+extension type SplashController._(_RenderSplashes _renderSplashes) implements Object {
   /// The [TickerProvider] used by this controller.
   ///
   /// [Splash]es added to this controller with [addSplash]
