@@ -908,7 +908,7 @@ class _TappableLabel {
 ///
 /// Values are accessed via [TappableLabel.labels].
 @visibleForTesting
-extension type TappableLabel._(_TappableLabel _label) {
+extension type TappableLabel._(_TappableLabel _label) implements Object {
   /// If the painter is a `_DialPainter`, returns information about its
   /// labels for testing purposes.
   ///
