@@ -26,6 +26,7 @@ import 'scroll_controller.dart';
 import 'scroll_delegate.dart';
 import 'scroll_notification.dart';
 import 'scroll_physics.dart';
+import 'scroll_view_keyboard_dismiss_configuration.dart';
 import 'scrollable.dart';
 import 'scrollable_helpers.dart';
 import 'sliver.dart';
@@ -117,7 +118,7 @@ abstract class ScrollView extends StatelessWidget {
     this.cacheExtent,
     this.semanticChildCount,
     this.dragStartBehavior = DragStartBehavior.start,
-    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
+    this.keyboardDismissBehavior,
     this.restorationId,
     this.clipBehavior = Clip.hardEdge,
     this.hitTestBehavior = HitTestBehavior.opaque,
@@ -369,7 +370,7 @@ abstract class ScrollView extends StatelessWidget {
   /// [ScrollViewKeyboardDismissBehavior] the defines how this [ScrollView] will
   /// dismiss the keyboard automatically.
   /// {@endtemplate}
-  final ScrollViewKeyboardDismissBehavior keyboardDismissBehavior;
+  final ScrollViewKeyboardDismissBehavior? keyboardDismissBehavior;
 
   /// {@macro flutter.widgets.scrollable.restorationId}
   final String? restorationId;
@@ -495,7 +496,12 @@ abstract class ScrollView extends StatelessWidget {
         ? PrimaryScrollController.none(child: scrollable)
         : scrollable;
 
-    if (keyboardDismissBehavior == ScrollViewKeyboardDismissBehavior.onDrag) {
+    final ScrollViewKeyboardDismissBehavior effectiveKeyboardDismissBehavior =
+        keyboardDismissBehavior ??
+            ScrollViewKeyboardDismissConfiguration.of(context) ??
+            ScrollViewKeyboardDismissBehavior.manual;
+
+    if (effectiveKeyboardDismissBehavior == ScrollViewKeyboardDismissBehavior.onDrag) {
       return NotificationListener<ScrollUpdateNotification>(
         child: scrollableResult,
         onNotification: (ScrollUpdateNotification notification) {

@@ -22,6 +22,7 @@ import 'scroll_controller.dart';
 import 'scroll_notification.dart';
 import 'scroll_physics.dart';
 import 'scroll_view.dart';
+import 'scroll_view_keyboard_dismiss_configuration.dart';
 import 'scrollable.dart';
 
 /// A box in which a single widget can be scrolled.
@@ -158,7 +159,7 @@ class SingleChildScrollView extends StatelessWidget {
     this.clipBehavior = Clip.hardEdge,
     this.hitTestBehavior = HitTestBehavior.opaque,
     this.restorationId,
-    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
+    this.keyboardDismissBehavior,
   }) : assert(
          !(controller != null && (primary ?? false)),
          'Primary ScrollViews obtain their ScrollController via inheritance '
@@ -233,7 +234,7 @@ class SingleChildScrollView extends StatelessWidget {
   final String? restorationId;
 
   /// {@macro flutter.widgets.scroll_view.keyboardDismissBehavior}
-  final ScrollViewKeyboardDismissBehavior keyboardDismissBehavior;
+  final ScrollViewKeyboardDismissBehavior? keyboardDismissBehavior;
 
   AxisDirection _getDirection(BuildContext context) {
     return getAxisDirectionFromAxisReverseAndDirectionality(context, scrollDirection, reverse);
@@ -271,7 +272,12 @@ class SingleChildScrollView extends StatelessWidget {
       },
     );
 
-    if (keyboardDismissBehavior == ScrollViewKeyboardDismissBehavior.onDrag) {
+    final ScrollViewKeyboardDismissBehavior effectiveKeyboardDismissBehavior =
+        keyboardDismissBehavior ??
+            ScrollViewKeyboardDismissConfiguration.of(context) ??
+            ScrollViewKeyboardDismissBehavior.manual;
+
+    if (effectiveKeyboardDismissBehavior == ScrollViewKeyboardDismissBehavior.onDrag) {
       scrollable = NotificationListener<ScrollUpdateNotification>(
         child: scrollable,
         onNotification: (ScrollUpdateNotification notification) {

@@ -98,7 +98,7 @@ class ReorderableListView extends StatefulWidget {
     this.anchor = 0.0,
     this.cacheExtent,
     this.dragStartBehavior = DragStartBehavior.start,
-    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
+    this.keyboardDismissBehavior,
     this.restorationId,
     this.clipBehavior = Clip.hardEdge,
     this.autoScrollerVelocityScalar,
@@ -168,7 +168,7 @@ class ReorderableListView extends StatefulWidget {
     this.anchor = 0.0,
     this.cacheExtent,
     this.dragStartBehavior = DragStartBehavior.start,
-    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
+    this.keyboardDismissBehavior,
     this.restorationId,
     this.clipBehavior = Clip.hardEdge,
     this.autoScrollerVelocityScalar,
@@ -268,9 +268,7 @@ class ReorderableListView extends StatefulWidget {
   final DragStartBehavior dragStartBehavior;
 
   /// {@macro flutter.widgets.scroll_view.keyboardDismissBehavior}
-  ///
-  /// The default is [ScrollViewKeyboardDismissBehavior.manual]
-  final ScrollViewKeyboardDismissBehavior keyboardDismissBehavior;
+  final ScrollViewKeyboardDismissBehavior? keyboardDismissBehavior;
 
   /// {@macro flutter.widgets.scrollable.restorationId}
   final String? restorationId;

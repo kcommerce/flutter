@@ -253,6 +253,7 @@ class MaterialApp extends StatefulWidget {
     this.actions,
     this.restorationScopeId,
     this.scrollBehavior,
+    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
     @Deprecated(
       'Remove this parameter as it is now ignored. '
       'MaterialApp never introduces its own MediaQuery; the View widget takes care of that. '
@@ -304,6 +305,7 @@ class MaterialApp extends StatefulWidget {
     this.actions,
     this.restorationScopeId,
     this.scrollBehavior,
+    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
     @Deprecated(
       'Remove this parameter as it is now ignored. '
       'MaterialApp never introduces its own MediaQuery; the View widget takes care of that. '
@@ -750,6 +752,17 @@ class MaterialApp extends StatefulWidget {
   ///    in a subtree.
   final ScrollBehavior? scrollBehavior;
 
+  /// {@template flutter.material.materialApp.keyboardDismissBehavior}
+  /// [ScrollViewKeyboardDismissBehavior] the defines how this [ScrollView] will
+  /// dismiss the keyboard automatically.
+  /// {@endtemplate}
+  ///
+  /// See also:
+  ///
+  ///  * [ScrollViewKeyboardDismissConfiguration], which controls how this [ScrollView] will
+  /// dismiss the keyboard automatically.
+  final ScrollViewKeyboardDismissBehavior keyboardDismissBehavior;
+
   /// Turns on a [GridPaper] overlay that paints a baseline grid
   /// Material apps.
   ///
@@ -1170,11 +1183,14 @@ class _MaterialAppState extends State<MaterialApp> {
       return true;
     }());
 
-    return ScrollConfiguration(
-      behavior: widget.scrollBehavior ?? const MaterialScrollBehavior(),
-      child: HeroControllerScope(
-        controller: _heroController,
-        child: result,
+    return ScrollViewKeyboardDismissConfiguration(
+      behavior: widget.keyboardDismissBehavior,
+      child: ScrollConfiguration(
+        behavior: widget.scrollBehavior ?? const MaterialScrollBehavior(),
+        child: HeroControllerScope(
+          controller: _heroController,
+          child: result,
+        ),
       ),
     );
   }

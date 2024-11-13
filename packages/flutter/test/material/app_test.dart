@@ -1678,6 +1678,37 @@ void main() {
       expect(find.text('Works'), findsOne);
     },
   );
+
+  testWidgets('MaterialApp has correct default ScrollViewKeyboardDismissBehavior', (WidgetTester tester) async {
+    late BuildContext capturedContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (BuildContext context) {
+            capturedContext = context;
+            return const Placeholder();
+          },
+        ),
+      ),
+    );
+    expect(ScrollViewKeyboardDismissConfiguration.of(capturedContext), ScrollViewKeyboardDismissBehavior.manual);
+  });
+
+  testWidgets('A ScrollViewKeyboardDismissBehavior can be set for MaterialApp', (WidgetTester tester) async {
+    late BuildContext capturedContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        home: Builder(
+          builder: (BuildContext context) {
+            capturedContext = context;
+            return const Placeholder();
+          },
+        ),
+      ),
+    );
+    expect(ScrollViewKeyboardDismissConfiguration.of(capturedContext), ScrollViewKeyboardDismissBehavior.onDrag);
+  });
 }
 
 class MockScrollBehavior extends ScrollBehavior {
