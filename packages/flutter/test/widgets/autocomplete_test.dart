@@ -139,6 +139,8 @@ void main() {
     final GlobalKey autocompleteKey = GlobalKey();
     final TextEditingController textEditingController = TextEditingController();
     final FocusNode focusNode = FocusNode();
+    addTearDown(textEditingController.dispose);
+    addTearDown(focusNode.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -2305,6 +2307,7 @@ void main() {
     final GlobalKey fieldKey = GlobalKey();
     final GlobalKey optionsKey = GlobalKey();
     final ScrollController scrollController = ScrollController();
+    addTearDown(scrollController.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -2397,6 +2400,7 @@ void main() {
     final GlobalKey fieldKey = GlobalKey();
     final GlobalKey optionsKey = GlobalKey();
     final ScrollController scrollController = ScrollController();
+    addTearDown(scrollController.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
