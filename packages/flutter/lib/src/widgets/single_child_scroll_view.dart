@@ -18,11 +18,11 @@ import 'focus_scope.dart';
 import 'framework.dart';
 import 'notification_listener.dart';
 import 'primary_scroll_controller.dart';
+import 'scroll_configuration.dart';
 import 'scroll_controller.dart';
 import 'scroll_notification.dart';
 import 'scroll_physics.dart';
 import 'scroll_view.dart';
-import 'scroll_view_keyboard_dismiss_configuration.dart';
 import 'scrollable.dart';
 
 /// A box in which a single widget can be scrolled.
@@ -234,6 +234,10 @@ class SingleChildScrollView extends StatelessWidget {
   final String? restorationId;
 
   /// {@macro flutter.widgets.scroll_view.keyboardDismissBehavior}
+  ///
+  /// If [keyboardDismissBehavior] is null then it will fallback to
+  /// [scrollBehavior] or to the closest [ScrollConfiguration] provided
+  /// by the context.
   final ScrollViewKeyboardDismissBehavior? keyboardDismissBehavior;
 
   AxisDirection _getDirection(BuildContext context) {
@@ -274,8 +278,7 @@ class SingleChildScrollView extends StatelessWidget {
 
     final ScrollViewKeyboardDismissBehavior effectiveKeyboardDismissBehavior =
         keyboardDismissBehavior ??
-            ScrollViewKeyboardDismissConfiguration.of(context) ??
-            ScrollViewKeyboardDismissBehavior.manual;
+            ScrollConfiguration.of(context).getKeyboardDismissBehavior(context);
 
     if (effectiveKeyboardDismissBehavior == ScrollViewKeyboardDismissBehavior.onDrag) {
       scrollable = NotificationListener<ScrollUpdateNotification>(

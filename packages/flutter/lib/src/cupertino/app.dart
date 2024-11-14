@@ -183,7 +183,6 @@ class CupertinoApp extends StatefulWidget {
     this.actions,
     this.restorationScopeId,
     this.scrollBehavior,
-    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
     @Deprecated(
       'Remove this parameter as it is now ignored. '
       'CupertinoApp never introduces its own MediaQuery; the View widget takes care of that. '
@@ -226,7 +225,6 @@ class CupertinoApp extends StatefulWidget {
     this.actions,
     this.restorationScopeId,
     this.scrollBehavior,
-    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
     @Deprecated(
       'Remove this parameter as it is now ignored. '
       'CupertinoApp never introduces its own MediaQuery; the View widget takes care of that. '
@@ -429,9 +427,6 @@ class CupertinoApp extends StatefulWidget {
   ///  * [ScrollConfiguration], which controls how [Scrollable] widgets behave
   ///    in a subtree.
   final ScrollBehavior? scrollBehavior;
-
-  /// {@macro flutter.material.materialApp.keyboardDismissBehavior}
-  final ScrollViewKeyboardDismissBehavior keyboardDismissBehavior;
 
   /// {@macro flutter.widgets.widgetsApp.useInheritedMediaQuery}
   @Deprecated(
@@ -659,22 +654,19 @@ class _CupertinoAppState extends State<CupertinoApp> {
   Widget build(BuildContext context) {
     final CupertinoThemeData effectiveThemeData = (widget.theme ?? const CupertinoThemeData()).resolveFrom(context);
 
-    return ScrollViewKeyboardDismissConfiguration(
-      behavior: widget.keyboardDismissBehavior,
-      child: ScrollConfiguration(
-        behavior: widget.scrollBehavior ?? const CupertinoScrollBehavior(),
-        child: CupertinoUserInterfaceLevel(
-          data: CupertinoUserInterfaceLevelData.base,
-          child: CupertinoTheme(
-            data: effectiveThemeData,
-            child: DefaultSelectionStyle(
-              selectionColor: effectiveThemeData.primaryColor.withOpacity(0.2),
-              cursorColor: effectiveThemeData.primaryColor,
-              child: HeroControllerScope(
-                controller: _heroController,
-                child: Builder(
-                  builder: _buildWidgetApp,
-                ),
+    return ScrollConfiguration(
+      behavior: widget.scrollBehavior ?? const CupertinoScrollBehavior(),
+      child: CupertinoUserInterfaceLevel(
+        data: CupertinoUserInterfaceLevelData.base,
+        child: CupertinoTheme(
+          data: effectiveThemeData,
+          child: DefaultSelectionStyle(
+            selectionColor: effectiveThemeData.primaryColor.withOpacity(0.2),
+            cursorColor: effectiveThemeData.primaryColor,
+            child: HeroControllerScope(
+              controller: _heroController,
+              child: Builder(
+                builder: _buildWidgetApp,
               ),
             ),
           ),

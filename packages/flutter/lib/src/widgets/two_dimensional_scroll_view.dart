@@ -13,12 +13,12 @@ import 'focus_scope.dart';
 import 'framework.dart';
 import 'notification_listener.dart';
 import 'primary_scroll_controller.dart';
+import 'scroll_configuration.dart';
 import 'scroll_controller.dart';
 import 'scroll_delegate.dart';
 import 'scroll_notification.dart';
 import 'scroll_physics.dart';
 import 'scroll_view.dart';
-import 'scroll_view_keyboard_dismiss_configuration.dart';
 import 'scrollable.dart';
 import 'scrollable_helpers.dart';
 import 'two_dimensional_viewport.dart';
@@ -110,6 +110,10 @@ abstract class TwoDimensionalScrollView extends StatelessWidget {
   final DragStartBehavior dragStartBehavior;
 
   /// {@macro flutter.widgets.scroll_view.keyboardDismissBehavior}
+  ///
+  /// If [keyboardDismissBehavior] is null then it will fallback to
+  /// [scrollBehavior] or to the closest [ScrollConfiguration] provided
+  /// by the context.
   final ScrollViewKeyboardDismissBehavior? keyboardDismissBehavior;
 
   /// {@macro flutter.widgets.scrollable.hitTestBehavior}
@@ -192,8 +196,7 @@ abstract class TwoDimensionalScrollView extends StatelessWidget {
 
     final ScrollViewKeyboardDismissBehavior effectiveKeyboardDismissBehavior =
         keyboardDismissBehavior ??
-            ScrollViewKeyboardDismissConfiguration.of(context) ??
-            ScrollViewKeyboardDismissBehavior.manual;
+            ScrollConfiguration.of(context).getKeyboardDismissBehavior(context);
 
     if (effectiveKeyboardDismissBehavior == ScrollViewKeyboardDismissBehavior.onDrag) {
       return NotificationListener<ScrollUpdateNotification>(
