@@ -224,11 +224,11 @@ class RawAutocomplete<T extends Object> extends StatefulWidget {
   ///
   /// In order to track which item is highlighted by keyboard navigation, the
   /// resulting options will be wrapped in an inherited
-  /// [AutocompleteHighlightedOption] widget. Inside this callback, the index of
-  /// the highlighted option can be obtained from
-  /// [AutocompleteHighlightedOption.of] to display the highlighted option with
-  /// a visual highlight to indicate it will be the option selected from the
-  /// keyboard.
+  /// [AutocompleteHighlightedOption] widget.
+  /// Inside this callback, the index of the highlighted option can be obtained
+  /// from [AutocompleteHighlightedOption.of] to display the highlighted option
+  /// with a visual highlight to indicate it will be the option selected from
+  /// the keyboard.
   ///
   /// {@endtemplate}
   final AutocompleteOptionsViewBuilder<T> optionsViewBuilder;
@@ -309,10 +309,10 @@ class RawAutocomplete<T extends Object> extends StatefulWidget {
 }
 
 class _RawAutocompleteState<T extends Object> extends State<RawAutocomplete<T>> {
+  final GlobalKey _fieldKey = GlobalKey();
   final LayerLink _optionsLayerLink = LayerLink();
-  final GlobalKey _fieldKey = GlobalKey(debugLabel: kReleaseMode ? null : 'AutocompleteFieldView');
 
-  // The box constraints that the field was last built with.
+  /// The box constraints that the field was last built with.
   final ValueNotifier<BoxConstraints> _fieldBoxConstraints = ValueNotifier<BoxConstraints>(const BoxConstraints());
 
   final OverlayPortalController _optionsViewController = OverlayPortalController(debugLabel: '_RawAutocompleteState');
@@ -448,7 +448,7 @@ class _RawAutocompleteState<T extends Object> extends State<RawAutocomplete<T>> 
     return ValueListenableBuilder<BoxConstraints>(
       valueListenable: _fieldBoxConstraints,
       builder: (BuildContext context, BoxConstraints constraints, Widget? child) {
-        return _Options(
+        return _RawAutocompleteOptions(
           fieldKey: _fieldKey,
           optionsLayerLink: _optionsLayerLink,
           optionsViewOpenDirection: widget.optionsViewOpenDirection,
@@ -513,7 +513,8 @@ class _RawAutocompleteState<T extends Object> extends State<RawAutocomplete<T>> 
       overlayChildBuilder: _buildOptionsView,
       child: TextFieldTapRegion(
         child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints boxConstraints) {
+          key: _fieldKey,
+          builder: (BuildContext context, BoxConstraints constraints) {
             // A post frame callback is used to get the field constraints so
             // that the options view overlay is rebuilt when the field
             // constraints change.
@@ -521,12 +522,11 @@ class _RawAutocompleteState<T extends Object> extends State<RawAutocomplete<T>> 
               if (!mounted) {
                 return;
               }
-              _fieldBoxConstraints.value = boxConstraints;
+              _fieldBoxConstraints.value = constraints;
             });
             return Shortcuts(
               shortcuts: _shortcuts,
               child: Actions(
-                key: _fieldKey,
                 actions: _actionMap,
                 child: CompositedTransformTarget(
                   link: _optionsLayerLink,
@@ -541,8 +541,8 @@ class _RawAutocompleteState<T extends Object> extends State<RawAutocomplete<T>> 
   }
 }
 
-class _Options extends StatefulWidget {
-  const _Options({
+class _RawAutocompleteOptions extends StatefulWidget {
+  const _RawAutocompleteOptions({
     required this.fieldKey,
     required this.optionsLayerLink,
     required this.optionsViewOpenDirection,
@@ -562,17 +562,19 @@ class _Options extends StatefulWidget {
   final ValueNotifier<int> highlightIndexNotifier;
 
   @override
-  State<_Options> createState() => _OptionsState();
+  State<_RawAutocompleteOptions> createState() => _RawAutocompleteOptionsState();
 }
 
-class _OptionsState extends State<_Options> {
+class _RawAutocompleteOptionsState extends State<_RawAutocompleteOptions> {
   late VoidCallback? removeCompositionCallback;
   Offset fieldOffset = Offset.zero;
 
+  // Get the field offset if the field's position changes when its layer tree
+  // is composited, which occurs for example if the field is in a scroll view.
   Offset _getFieldOffset() {
-    final RenderBox? fieldRenderBox =
-        widget.fieldKey.currentContext?.findRenderObject() as RenderBox?;
-    return fieldRenderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
+    final RenderBox? fieldRenderBox = widget.fieldKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? overlay = Overlay.of(widget.overlayContext).context.findRenderObject() as RenderBox?;
+    return fieldRenderBox?.localToGlobal(Offset.zero, ancestor: overlay) ?? Offset.zero;
   }
 
   void _onLeaderComposition(Layer leaderLayer) {
@@ -596,7 +598,7 @@ class _OptionsState extends State<_Options> {
   }
 
   @override
-  void didUpdateWidget(_Options oldWidget) {
+  void didUpdateWidget(_RawAutocompleteOptions oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.optionsLayerLink.leader != oldWidget.optionsLayerLink.leader) {
       removeCompositionCallback?.call();
@@ -619,7 +621,7 @@ class _OptionsState extends State<_Options> {
       // When the field goes offscreen, don't show the options.
       showWhenUnlinked: false,
       child: CustomSingleChildLayout(
-        delegate: _OptionsLayoutDelegate(
+        delegate: _RawAutocompleteOptionsLayoutDelegate(
           fieldSize: widget.optionsLayerLink.leaderSize,
           fieldOffset: fieldOffset,
           optionsViewOpenDirection: widget.optionsViewOpenDirection,
@@ -641,8 +643,8 @@ class _OptionsState extends State<_Options> {
 }
 
 /// Positions the options view.
-class _OptionsLayoutDelegate extends SingleChildLayoutDelegate {
-  _OptionsLayoutDelegate({
+class _RawAutocompleteOptionsLayoutDelegate extends SingleChildLayoutDelegate {
+  _RawAutocompleteOptionsLayoutDelegate({
     required this.fieldSize,
     required this.fieldOffset,
     required this.optionsViewOpenDirection,
@@ -670,7 +672,7 @@ class _OptionsLayoutDelegate extends SingleChildLayoutDelegate {
     assert(fieldSize != null && fieldSize!.isFinite);
     assert(fieldOffset != null && fieldOffset!.isFinite);
 
-    return constraints.loosen().copyWith(
+    return BoxConstraints(
       // The field width may be zero if this is a split RawAutocomplete with no
       // field of its own. In that case, don't change the constraints width.
       maxWidth: fieldSize!.width == 0.0 ? constraints.maxWidth : fieldSize!.width,
@@ -693,23 +695,26 @@ class _OptionsLayoutDelegate extends SingleChildLayoutDelegate {
     assert(fieldSize != null && fieldSize!.isFinite);
     assert(fieldOffset != null && fieldOffset!.isFinite);
 
-    final double origin = size.height / 2 - fieldSize!.height / 2;
-    final double dy = switch (optionsViewOpenDirection) {
-      OptionsViewOpenDirection.down => origin + fieldSize!.height,
-      OptionsViewOpenDirection.up => origin - childSize.height,
-    };
-    final double maxDy = max(origin, origin + size.height - childSize.height - fieldOffset!.dy);
+    // Aligning the vertical center of the child to the vertical center of the
+    // field offsets the vertical position for the child.
+    final double verticalOffset = size.height / 2 - fieldSize!.height / 2;
     return Offset(
       switch (textDirection) {
         TextDirection.ltr => 0.0,
         TextDirection.rtl => fieldSize!.width - childSize.width,
       },
-      clampDouble(dy, origin - fieldOffset!.dy, maxDy),
+      verticalOffset + switch (optionsViewOpenDirection) {
+        OptionsViewOpenDirection.down => min(
+          fieldSize!.height,
+          size.height - childSize.height - fieldOffset!.dy,
+        ),
+        OptionsViewOpenDirection.up => max(-childSize.height, -fieldOffset!.dy),
+      }
     );
   }
 
   @override
-  bool shouldRelayout(_OptionsLayoutDelegate oldDelegate) {
+  bool shouldRelayout(_RawAutocompleteOptionsLayoutDelegate oldDelegate) {
     if (fieldOffset == null || !fieldOffset!.isFinite
         || fieldSize == null || !fieldSize!.isFinite) {
       return false;
