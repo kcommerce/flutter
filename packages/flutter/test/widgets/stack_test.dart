@@ -534,7 +534,7 @@ void main() {
             index: activeIndex,
             children: children,
           ),
-        )
+        ),
       );
     }
     Future<void> requestFocusAndPump(FocusNode node) async {
