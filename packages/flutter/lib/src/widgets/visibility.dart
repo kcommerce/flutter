@@ -249,7 +249,7 @@ class Visibility extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget result = ExcludeFocus(
-      excluding: !visible,
+      excluding: !visible && !maintainInteractivity,
       child: child,
     );
     if (maintainSize) {
