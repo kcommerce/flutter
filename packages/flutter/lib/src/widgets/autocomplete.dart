@@ -8,7 +8,6 @@ library;
 import 'dart:async';
 import 'dart:math' show max, min;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
