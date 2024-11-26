@@ -312,7 +312,7 @@ class _RawAutocompleteState<T extends Object> extends State<RawAutocomplete<T>> 
   final LayerLink _optionsLayerLink = LayerLink();
 
   /// The box constraints that the field was last built with.
-  final ValueNotifier<BoxConstraints> _fieldBoxConstraints = ValueNotifier<BoxConstraints>(const BoxConstraints());
+  final ValueNotifier<BoxConstraints?> _fieldBoxConstraints = ValueNotifier<BoxConstraints?>(null);
 
   final OverlayPortalController _optionsViewController = OverlayPortalController(debugLabel: '_RawAutocompleteState');
 
@@ -444,9 +444,9 @@ class _RawAutocompleteState<T extends Object> extends State<RawAutocomplete<T>> 
   }
 
   Widget _buildOptionsView(BuildContext context) {
-    return ValueListenableBuilder<BoxConstraints>(
+    return ValueListenableBuilder<BoxConstraints?>(
       valueListenable: _fieldBoxConstraints,
-      builder: (BuildContext context, BoxConstraints constraints, Widget? child) {
+      builder: (BuildContext context, BoxConstraints? constraints, Widget? child) {
         return _RawAutocompleteOptions(
           fieldKey: _fieldKey,
           optionsLayerLink: _optionsLayerLink,
