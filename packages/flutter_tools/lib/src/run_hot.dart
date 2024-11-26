@@ -209,8 +209,12 @@ class HotRunner extends ResidentRunner {
             await device.generator!.compileExpression(expression, definitions,
                 definitionTypes, typeDefinitions, typeBounds, typeDefaults,
                 libraryUri, klass, method, isStatic);
-        if (compilerOutput != null && compilerOutput.expressionData != null) {
-          return base64.encode(compilerOutput.expressionData!);
+        if (compilerOutput != null) {
+          if (compilerOutput.errorCount == 0 && compilerOutput.expressionData != null) {
+            return base64.encode(compilerOutput.expressionData!);
+          } else if (compilerOutput.errorCount > 0 && compilerOutput.errorMessage != null) {
+            throw VmServiceExpressionCompilationException(compilerOutput.errorMessage!);
+          }
         }
       }
     }
@@ -1248,8 +1252,10 @@ class HotRunner extends ResidentRunner {
 
   @override
   Future<void> cleanupAfterSignal() async {
+    await residentDevtoolsHandler!.shutdown();
     await stopEchoingDeviceLog();
     await hotRunnerConfig!.runPreShutdownOperations();
+    shutdownDartDevelopmentService();
     if (stopAppDuringCleanup) {
       return exitApp();
     }
