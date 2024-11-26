@@ -686,13 +686,13 @@ class _RawAutocompleteOptionsLayoutDelegate extends SingleChildLayoutDelegate {
       // The field width may be zero if this is a split RawAutocomplete with no
       // field of its own. In that case, don't change the constraints width.
       maxWidth: fieldSize!.width == 0.0 ? constraints.maxWidth : fieldSize!.width,
-      maxHeight: switch (optionsViewOpenDirection) {
-        OptionsViewOpenDirection.down => max(
-          min(_kMinUsableHeight, constraints.maxHeight),
-          constraints.maxHeight - fieldOffset!.dy - fieldSize!.height,
-        ),
-        OptionsViewOpenDirection.up => max(_kMinUsableHeight, fieldOffset!.dy),
-      },
+      maxHeight: max(
+        _kMinUsableHeight,
+        switch (optionsViewOpenDirection) {
+          OptionsViewOpenDirection.down => constraints.maxHeight - fieldOffset!.dy - fieldSize!.height,
+          OptionsViewOpenDirection.up => fieldOffset!.dy,
+        },
+      ),
     );
   }
 
@@ -705,8 +705,6 @@ class _RawAutocompleteOptionsLayoutDelegate extends SingleChildLayoutDelegate {
     assert(fieldSize != null && fieldSize!.isFinite);
     assert(fieldOffset != null && fieldOffset!.isFinite);
 
-    // Aligning the vertical center of the child to the vertical center of the
-    // field offsets the vertical position for the child.
     return Offset(
       switch (textDirection) {
         TextDirection.ltr => 0.0,
