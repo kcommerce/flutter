@@ -664,6 +664,15 @@ class _RawAutocompleteOptionsLayoutDelegate extends SingleChildLayoutDelegate {
   /// The [TextDirection] of this part of the widget tree.
   final TextDirection textDirection;
 
+  // A big enough height for about one item in the default
+  // Autocomplete.optionsViewBuilder. The assumption is that the user likely
+  // wants the list of options to move to stay on the screen rather than get any
+  // smaller than this. Allows Autocomplete to work when it has very little
+  // screen height available (as in b/317115348) by positioning itself on top of
+  // the field, while in other cases to size itself based on the height under
+  // the field.
+  static const double _kMinUsableHeight = kMinInteractiveDimension;
+
   // Limits the child to the space above/below the field, with a minimum, and
   // with the same maxWidth constraint as the field has.
   @override
@@ -679,10 +688,10 @@ class _RawAutocompleteOptionsLayoutDelegate extends SingleChildLayoutDelegate {
       maxWidth: fieldSize!.width == 0.0 ? constraints.maxWidth : fieldSize!.width,
       maxHeight: switch (optionsViewOpenDirection) {
         OptionsViewOpenDirection.down => max(
-          min(kMinInteractiveDimension, constraints.maxHeight),
+          min(_kMinUsableHeight, constraints.maxHeight),
           constraints.maxHeight - fieldOffset!.dy - fieldSize!.height,
         ),
-        OptionsViewOpenDirection.up => max(kMinInteractiveDimension, fieldOffset!.dy),
+        OptionsViewOpenDirection.up => max(_kMinUsableHeight, fieldOffset!.dy),
       },
     );
   }
