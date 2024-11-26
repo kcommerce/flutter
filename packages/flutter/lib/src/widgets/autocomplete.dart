@@ -615,8 +615,10 @@ class _RawAutocompleteOptionsState extends State<_RawAutocompleteOptions> {
   Widget build(BuildContext context) {
     return CompositedTransformFollower(
       link: widget.optionsLayerLink,
-      targetAnchor: Alignment.centerLeft,
-      followerAnchor: Alignment.centerLeft,
+      followerAnchor: switch (widget.optionsViewOpenDirection) {
+        OptionsViewOpenDirection.up => Alignment.bottomLeft,
+        OptionsViewOpenDirection.down => Alignment.topLeft,
+      },
       // When the field goes offscreen, don't show the options.
       showWhenUnlinked: false,
       child: CustomSingleChildLayout(
@@ -696,18 +698,17 @@ class _RawAutocompleteOptionsLayoutDelegate extends SingleChildLayoutDelegate {
 
     // Aligning the vertical center of the child to the vertical center of the
     // field offsets the vertical position for the child.
-    final double verticalOffset = size.height / 2 - fieldSize!.height / 2;
     return Offset(
       switch (textDirection) {
         TextDirection.ltr => 0.0,
         TextDirection.rtl => fieldSize!.width - childSize.width,
       },
-      verticalOffset + switch (optionsViewOpenDirection) {
+      switch (optionsViewOpenDirection) {
         OptionsViewOpenDirection.down => min(
           fieldSize!.height,
           size.height - childSize.height - fieldOffset!.dy,
         ),
-        OptionsViewOpenDirection.up => max(-childSize.height, -fieldOffset!.dy),
+        OptionsViewOpenDirection.up => size.height - min(childSize.height, fieldOffset!.dy),
       }
     );
   }
