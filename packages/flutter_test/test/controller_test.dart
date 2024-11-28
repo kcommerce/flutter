@@ -740,6 +740,41 @@ void main() {
     });
   });
 
+  // Regression test from https://github.com/flutter/flutter/issues/143921.
+  testWidgets('WidgetTester.scrollUntilVisible should work together with onTap', (WidgetTester tester) async {
+    const int itemCount = 20;
+
+    Widget buildFrame(bool hasOnTap) {
+      return MaterialApp(
+        key: ValueKey<bool>(hasOnTap), // Trigger a rebuild.
+        home: Scaffold(
+          body: ListView.builder(
+            itemCount: itemCount,
+            itemBuilder: (BuildContext context, int index) => ListTile(
+              onTap: hasOnTap ? () {} : null,
+              title: Text('$index'),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final Finder target = find.text('${itemCount - 1}');
+    final Finder scrollable = find.byType(Scrollable);
+
+    // Scroll without onTap.
+    await tester.pumpWidget(buildFrame(false));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(target, 20, scrollable: scrollable);
+    expect(target, findsOneWidget);
+
+    // Scroll with onTap.
+    await tester.pumpWidget(buildFrame(true));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(target, 20, scrollable: scrollable);
+    expect(target, findsOneWidget);
+  });
+
   testWidgets('platformDispatcher exposes the platformDispatcher from binding', (WidgetTester tester) async {
     expect(tester.platformDispatcher, tester.binding.platformDispatcher);
   });
