@@ -740,7 +740,7 @@ void main() {
     });
   });
 
-  // Regression test from https://github.com/flutter/flutter/issues/143921.
+  // Regression test for https://github.com/flutter/flutter/issues/143921.
   testWidgets('WidgetTester.scrollUntilVisible should work together with onTap', (WidgetTester tester) async {
     const int itemCount = 20;
 
