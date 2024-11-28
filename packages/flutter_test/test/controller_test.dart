@@ -746,9 +746,9 @@ void main() {
 
     Widget buildFrame(bool hasOnTap) {
       return MaterialApp(
-        key: ValueKey<bool>(hasOnTap), // Trigger a rebuild.
         home: Scaffold(
           body: ListView.builder(
+            key: ValueKey<bool>(hasOnTap), // Trigger a rebuild.
             itemCount: itemCount,
             itemBuilder: (BuildContext context, int index) => ListTile(
               onTap: hasOnTap ? () {} : null,
@@ -765,12 +765,14 @@ void main() {
     // Scroll without onTap.
     await tester.pumpWidget(buildFrame(false));
     await tester.pumpAndSettle();
+    expect(target, findsNothing);
     await tester.scrollUntilVisible(target, 20, scrollable: scrollable);
     expect(target, findsOneWidget);
 
     // Scroll with onTap.
     await tester.pumpWidget(buildFrame(true));
     await tester.pumpAndSettle();
+    expect(target, findsNothing);
     await tester.scrollUntilVisible(target, 20, scrollable: scrollable);
     expect(target, findsOneWidget);
   });
