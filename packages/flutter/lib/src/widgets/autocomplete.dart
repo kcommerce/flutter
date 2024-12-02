@@ -565,7 +565,7 @@ class _RawAutocompleteOptions extends StatefulWidget {
 }
 
 class _RawAutocompleteOptionsState extends State<_RawAutocompleteOptions> {
-  late VoidCallback? removeCompositionCallback;
+  VoidCallback? removeCompositionCallback;
   Offset fieldOffset = Offset.zero;
 
   // Get the field offset if the field's position changes when its layer tree
