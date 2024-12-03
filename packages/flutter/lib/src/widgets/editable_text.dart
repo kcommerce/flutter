@@ -20,12 +20,13 @@ import 'dart:ui' as ui hide TextStyle;
 
 import 'package:characters/characters.dart' show CharacterRange, StringCharacters;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart' show DragStartBehavior;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import 'actions.dart';
+import 'app_lifecycle_listener.dart';
 import 'autofill.dart';
 import 'automatic_keep_alive.dart';
 import 'basic.dart';
@@ -850,6 +851,7 @@ class EditableText extends StatefulWidget {
     this.onSelectionHandleTapped,
     this.groupId = EditableText,
     this.onTapOutside,
+    this.onTapUpOutside,
     List<TextInputFormatter>? inputFormatters,
     this.mouseCursor,
     this.rendererIgnoresPointer = false,
@@ -878,7 +880,12 @@ class EditableText extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
     this.scrollBehavior,
+    @Deprecated(
+      'Use `stylusHandwritingEnabled` instead. '
+      'This feature was deprecated after v3.27.0-0.2.pre.',
+    )
     this.scribbleEnabled = true,
+    this.stylusHandwritingEnabled = defaultStylusHandwritingEnabled,
     this.enableIMEPersonalizedLearning = true,
     this.contentInsertionConfiguration,
     this.contextMenuBuilder,
@@ -1492,8 +1499,8 @@ class EditableText extends StatefulWidget {
   final Object groupId;
 
   /// {@template flutter.widgets.editableText.onTapOutside}
-  /// Called for each tap that occurs outside of the[TextFieldTapRegion] group
-  /// when the text field is focused.
+  /// Called for each tap down that occurs outside of the [TextFieldTapRegion]
+  /// group when the text field is focused.
   ///
   /// If this is null, [EditableTextTapOutsideIntent] will be invoked. In the
   /// default implementation, [FocusNode.unfocus] will be called on the
@@ -1530,9 +1537,26 @@ class EditableText extends StatefulWidget {
   /// See also:
   ///
   ///  * [TapRegion] for how the region group is determined.
+  ///  * [onTapUpOutside] which is called for each tap up.
   ///  * [EditableTextTapOutsideIntent] for the intent that is invoked if
   ///  this is null.
   final TapRegionCallback? onTapOutside;
+
+  /// {@template flutter.widgets.editableText.onTapUpOutside}
+  /// Called for each tap up that occurs outside of the [TextFieldTapRegion]
+  /// group when the text field is focused.
+  ///
+  /// The [PointerUpEvent] passed to the function is the event that caused the
+  /// notification. It is possible that the event may occur outside of the
+  /// immediate bounding box defined by the text field, although it will be
+  /// within the bounding box of a [TextFieldTapRegion] member.
+  /// {@endtemplate}
+  ///
+  /// See also:
+  ///
+  ///  * [TapRegion] for how the region group is determined.
+  ///  * [onTapOutside], which is called for each tap down.
+  final TapRegionUpCallback? onTapUpOutside;
 
   /// {@template flutter.widgets.editableText.inputFormatters}
   /// Optional input validation and formatting overrides.
@@ -1716,7 +1740,32 @@ class EditableText extends StatefulWidget {
   ///
   /// Defaults to true.
   /// {@endtemplate}
+  @Deprecated(
+    'Use `stylusHandwritingEnabled` instead. '
+    'This feature was deprecated after v3.27.0-0.2.pre.',
+  )
   final bool scribbleEnabled;
+
+  /// {@template flutter.widgets.editableText.stylusHandwritingEnabled}
+  /// Whether this input supports stylus handwriting, where the user can write
+  /// directly on top of a field.
+  ///
+  /// Currently only the following devices are supported:
+  ///
+  ///  * iPads running iOS 14 and above using an Apple Pencil.
+  ///  * Android devices running API 34 and above and using an active stylus.
+  /// {@endtemplate}
+  ///
+  /// On Android, Scribe gestures are detected outside of [EditableText],
+  /// typically by [TextSelectionGestureDetectorBuilder]. This is handled
+  /// automatically in [TextField].
+  ///
+  /// See also:
+  ///
+  ///   * [ScribbleClient], which can be mixed into an arbirtrary widget to
+  ///     provide iOS Scribble functionality.
+  ///   * [Scribe], which can be used to interact with Android Scribe directly.
+  final bool stylusHandwritingEnabled;
 
   /// {@template flutter.widgets.editableText.selectionEnabled}
   /// Same as [enableInteractiveSelection].
@@ -1784,6 +1833,10 @@ class EditableText extends StatefulWidget {
   ///   Autofill service. Enable the autofill service of your choice, and make
   ///   sure there are available credentials associated with your app.
   ///
+  /// Specifying [InputDecoration.hintText] may also help autofill services
+  /// (like Samsung Pass) determine the expected content type of an input field,
+  /// although this is typically not required when autofillHints are present.
+  ///
   /// #### I called `TextInput.finishAutofillContext` but the autofill save
   /// prompt isn't showing
   ///
@@ -1828,17 +1881,17 @@ class EditableText extends StatefulWidget {
   ///    Flutter.
   final String? restorationId;
 
-  /// {@template flutter.widgets.shadow.scrollBehavior}
+  /// {@template flutter.widgets.editableText.scrollBehavior}
   /// A [ScrollBehavior] that will be applied to this widget individually.
   ///
   /// Defaults to null, wherein the inherited [ScrollBehavior] is copied and
   /// modified to alter the viewport decoration, like [Scrollbar]s.
-  /// {@endtemplate}
   ///
   /// [ScrollBehavior]s also provide [ScrollPhysics]. If an explicit
   /// [ScrollPhysics] is provided in [scrollPhysics], it will take precedence,
   /// followed by [scrollBehavior], and then the inherited ancestor
   /// [ScrollBehavior].
+  /// {@endtemplate}
   ///
   /// The [ScrollBehavior] of the inherited [ScrollConfiguration] will be
   /// modified by default to only apply a [Scrollbar] if [maxLines] is greater
@@ -1955,6 +2008,9 @@ class EditableText extends StatefulWidget {
   ///
   /// {@macro flutter.widgets.magnifier.intro}
   final TextMagnifierConfiguration magnifierConfiguration;
+
+  /// The default value for [stylusHandwritingEnabled].
+  static const bool defaultStylusHandwritingEnabled = true;
 
   bool get _userSelectionEnabled => enableInteractiveSelection && (!readOnly || !obscureText);
 
@@ -2223,6 +2279,7 @@ class EditableText extends StatefulWidget {
     properties.add(DiagnosticsProperty<Iterable<String>>('autofillHints', autofillHints, defaultValue: null));
     properties.add(DiagnosticsProperty<TextHeightBehavior>('textHeightBehavior', textHeightBehavior, defaultValue: null));
     properties.add(DiagnosticsProperty<bool>('scribbleEnabled', scribbleEnabled, defaultValue: true));
+    properties.add(DiagnosticsProperty<bool>('stylusHandwritingEnabled', stylusHandwritingEnabled, defaultValue: defaultStylusHandwritingEnabled));
     properties.add(DiagnosticsProperty<bool>('enableIMEPersonalizedLearning', enableIMEPersonalizedLearning, defaultValue: true));
     properties.add(DiagnosticsProperty<bool>('enableInteractiveSelection', enableInteractiveSelection, defaultValue: true));
     properties.add(DiagnosticsProperty<UndoHistoryController>('undoController', undoController, defaultValue: null));
@@ -2343,6 +2400,18 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
   AnimationController? _floatingCursorResetController;
 
   Orientation? _lastOrientation;
+
+  bool get _stylusHandwritingEnabled {
+    // During the deprecation period, respect scribbleEnabled being explicitly
+    // set.
+    if (!widget.scribbleEnabled) {
+      return widget.scribbleEnabled;
+    }
+    return widget.stylusHandwritingEnabled;
+  }
+
+  late final AppLifecycleListener _appLifecycleListener;
+  bool _justResumed = false;
 
   @override
   bool get wantKeepAlive => widget.focusNode.hasFocus;
@@ -2957,6 +3026,7 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
 
   // State lifecycle:
 
+  @protected
   @override
   void initState() {
     super.initState();
@@ -2966,6 +3036,9 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
     widget.focusNode.addListener(_handleFocusChanged);
     _cursorVisibilityNotifier.value = widget.showCursor;
     _spellCheckConfiguration = _inferSpellCheckConfiguration(widget.spellCheckConfiguration);
+    _appLifecycleListener = AppLifecycleListener(
+      onResume: () => _justResumed = true,
+    );
     _initProcessTextActions();
   }
 
@@ -2980,6 +3053,7 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
   // cursor) are supposed to run.
   bool _tickersEnabled = true;
 
+  @protected
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -3055,6 +3129,7 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
     }
   }
 
+  @protected
   @override
   void didUpdateWidget(EditableText oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -3158,6 +3233,7 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
     }
   }
 
+  @protected
   @override
   void dispose() {
     _internalScrollController?.dispose();
@@ -3180,6 +3256,7 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
     clipboardStatus.removeListener(_onChangedClipboardStatus);
     clipboardStatus.dispose();
     _cursorVisibilityNotifier.dispose();
+    _appLifecycleListener.dispose();
     FocusManager.instance.removeListener(_unflagInternalFocus);
     _disposeScrollNotificationObserver();
     super.dispose();
@@ -4382,7 +4459,9 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
     final bool shouldSelectAll = widget.selectionEnabled
         && (kIsWeb || isDesktop)
         && !_isMultiline
-        && !_nextFocusChangeIsInternal;
+        && !_nextFocusChangeIsInternal
+        && !_justResumed;
+    _justResumed = false;
     if (shouldSelectAll) {
       // On native web and desktop platforms, single line <input> tags
       // select all when receiving focus.
@@ -4432,7 +4511,7 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
   _ScribbleCacheKey? _scribbleCacheKey;
 
   void _updateSelectionRects({bool force = false}) {
-    if (!widget.scribbleEnabled || defaultTargetPlatform != TargetPlatform.iOS) {
+    if (!_stylusHandwritingEnabled || defaultTargetPlatform != TargetPlatform.iOS) {
       return;
     }
 
@@ -4608,6 +4687,9 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
     if (_selectionOverlay == null) {
       return false;
     }
+    if (_selectionOverlay!.toolbarIsVisible) {
+      return false;
+    }
     _liveTextInputStatus?.update();
     clipboardStatus.update();
     _selectionOverlay!.showToolbar();
@@ -4723,7 +4805,7 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
 
   @override
   void insertTextPlaceholder(Size size) {
-    if (!widget.scribbleEnabled) {
+    if (!_stylusHandwritingEnabled) {
       return;
     }
 
@@ -4738,7 +4820,7 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
 
   @override
   void removeTextPlaceholder() {
-    if (!widget.scribbleEnabled || _placeholderLocation == -1) {
+    if (!_stylusHandwritingEnabled || _placeholderLocation == -1) {
       return;
     }
 
@@ -5150,6 +5232,7 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
     EditableTextTapOutsideIntent: _makeOverridable(_EditableTextTapOutsideAction()),
   };
 
+  @protected
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasMediaQuery(context));
@@ -5172,6 +5255,7 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
             return TextFieldTapRegion(
               groupId: widget.groupId,
               onTapOutside: _hasFocus ? widget.onTapOutside ?? (PointerDownEvent event) => _defaultOnTapOutside(context, event) : null,
+              onTapUpOutside: widget.onTapUpOutside,
               debugLabel: kReleaseMode ? null : 'EditableText',
               child: MouseRegion(
                 cursor: widget.mouseCursor ?? SystemMouseCursors.text,
@@ -5250,9 +5334,9 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
                               onCut: _semanticsOnCut(controls),
                               onPaste: _semanticsOnPaste(controls),
                               child: _ScribbleFocusable(
-                                focusNode: widget.focusNode,
                                 editableKey: _editableKey,
-                                enabled: widget.scribbleEnabled,
+                                enabled: _stylusHandwritingEnabled,
+                                focusNode: widget.focusNode,
                                 updateSelectionRects: () {
                                   _openInputConnection();
                                   _updateSelectionRects(force: true);
@@ -5328,10 +5412,8 @@ class EditableTextState extends State<EditableText> with AutomaticKeepAliveClien
       String text = _value.text;
       text = widget.obscuringCharacter * text.length;
       // Reveal the latest character in an obscured field only on mobile.
-      // Newer versions of iOS (iOS 15+) no longer reveal the most recently
-      // entered character.
       const Set<TargetPlatform> mobilePlatforms = <TargetPlatform> {
-        TargetPlatform.android, TargetPlatform.fuchsia,
+        TargetPlatform.android, TargetPlatform.fuchsia, TargetPlatform.iOS,
       };
       final bool brieflyShowPassword = WidgetsBinding.instance.platformDispatcher.brieflyShowPassword
                                     && mobilePlatforms.contains(defaultTargetPlatform);
