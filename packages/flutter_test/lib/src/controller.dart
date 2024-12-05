@@ -2179,7 +2179,6 @@ abstract class WidgetController {
     int maxScrolls = 50,
     Duration duration = const Duration(milliseconds: 50),
   }) {
-    assert(delta != 0);
     assert(maxScrolls > 0);
     scrollable ??= finders.find.byType(Scrollable);
     return TestAsyncUtils.guard<void>(() async {
@@ -2222,8 +2221,6 @@ abstract class WidgetController {
     int maxIteration = 50,
     Duration duration = const Duration(milliseconds: 50),
   }) {
-    assert(moveStep != Offset.zero);
-    assert(maxIteration > 0);
     return TestAsyncUtils.guard<void>(() async {
       TestGesture? gesture;
       while (maxIteration > 0 && finder.evaluate().isEmpty) {

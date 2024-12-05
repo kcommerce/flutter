@@ -777,64 +777,6 @@ void main() {
     expect(target, findsOneWidget);
   });
 
-  testWidgets('WidgetTester.scrollUntilVisible throw if parameters invalid', (WidgetTester tester) async {
-    final Finder finder = find.byType(Placeholder);
-    await tester.pumpWidget(const SingleChildScrollView(child: Placeholder()));
-
-    await tester.pumpAndSettle();
-    expect(finder, findsOneWidget);
-
-    // Throw if delta is zero.
-    await expectLater(
-      () async => tester.scrollUntilVisible(finder, 0.0),
-      throwsA(isAssertionError.having(
-        (AssertionError e) => e.toString(),
-        '.toString()',
-        contains('delta'),
-      )),
-    );
-
-    // Throw if maxScrolls is zero.
-    await expectLater(
-      () async => tester.scrollUntilVisible(finder, 10.0, maxScrolls: 0),
-      throwsA(isAssertionError.having(
-        (AssertionError e) => e.toString(),
-        '.toString()',
-        contains('maxScrolls'),
-      )),
-    );
-  });
-
-  testWidgets('WidgetTester.dragUntilVisible throw if parameters invalid', (WidgetTester tester) async {
-    final Finder finder = find.byType(Placeholder);
-    final Finder scrollable = find.byType(Scrollable);
-    await tester.pumpWidget(const SingleChildScrollView(child: Placeholder()));
-
-    await tester.pumpAndSettle();
-    expect(finder, findsOneWidget);
-
-    // Throw if moveStep is Offset.zero.
-    await expectLater(
-      () async => tester.dragUntilVisible(scrollable, finder, Offset.zero,),
-      throwsA(isAssertionError.having(
-        (AssertionError e) => e.toString(),
-        '.toString()',
-        contains('moveStep'),
-      )),
-    );
-
-    // Throw if maxIteration is zero.
-    const Offset moveStep = Offset(10.0, 0.0);
-    await expectLater(
-      () async => tester.dragUntilVisible(scrollable, finder, moveStep, maxIteration: 0),
-      throwsA(isAssertionError.having(
-        (AssertionError e) => e.toString(),
-        '.toString()',
-        contains('maxIteration'),
-      )),
-    );
-  });
-
   testWidgets('platformDispatcher exposes the platformDispatcher from binding', (WidgetTester tester) async {
     expect(tester.platformDispatcher, tester.binding.platformDispatcher);
   });
