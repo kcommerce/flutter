@@ -258,7 +258,6 @@ void main() {
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -281,7 +280,6 @@ void main() {
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -324,7 +322,6 @@ flutter:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
       ),
@@ -384,7 +381,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -419,7 +415,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
       ),
@@ -433,7 +428,6 @@ workspace:
       final PackagesCommand command = await runCommandIn(projectPath, 'get');
       final PackagesGetCommand getCommand = command.subcommands['get']! as PackagesGetCommand;
 
-      expect((await getCommand.usageValues).commandPackagesNumberPlugins, 0);
       expect(
         (await getCommand.unifiedAnalyticsUsageValues('pub/get'))
             .eventData['packagesNumberPlugins'],
@@ -445,7 +439,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -463,7 +456,6 @@ workspace:
       final PackagesGetCommand getCommand = command.subcommands['get']! as PackagesGetCommand;
 
       // A plugin example depends on the plugin itself, and integration_test.
-      expect((await getCommand.usageValues).commandPackagesNumberPlugins, 2);
       expect(
         (await getCommand.unifiedAnalyticsUsageValues('pub/get'))
             .eventData['packagesNumberPlugins'],
@@ -475,7 +467,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -490,7 +481,6 @@ workspace:
       final PackagesCommand command = await runCommandIn(projectPath, 'get');
       final PackagesGetCommand getCommand = command.subcommands['get']! as PackagesGetCommand;
 
-      expect((await getCommand.usageValues).commandPackagesProjectModule, false);
       expect(
         (await getCommand.unifiedAnalyticsUsageValues('pub/get'))
             .eventData['packagesProjectModule'],
@@ -502,7 +492,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -517,7 +506,6 @@ workspace:
       final PackagesCommand command = await runCommandIn(projectPath, 'get');
       final PackagesGetCommand getCommand = command.subcommands['get']! as PackagesGetCommand;
 
-      expect((await getCommand.usageValues).commandPackagesProjectModule, true);
       expect(
         (await getCommand.unifiedAnalyticsUsageValues('pub/get'))
             .eventData['packagesProjectModule'],
@@ -529,7 +517,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -544,7 +531,6 @@ workspace:
       final PackagesCommand command = await runCommandIn(projectPath, 'get');
       final PackagesGetCommand getCommand = command.subcommands['get']! as PackagesGetCommand;
 
-      expect((await getCommand.usageValues).commandPackagesAndroidEmbeddingVersion, 'v2');
       expect(
         (await getCommand.unifiedAnalyticsUsageValues('pub/get'))
             .eventData['packagesAndroidEmbeddingVersion'],
@@ -556,7 +542,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -578,7 +563,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -600,7 +584,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -630,7 +613,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -661,7 +643,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -698,7 +679,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -724,7 +704,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -755,7 +734,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -786,7 +764,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,
@@ -815,7 +792,6 @@ workspace:
         fileSystem: globals.fs,
         logger: globals.logger,
         processManager: globals.processManager,
-        usage: globals.flutterUsage,
         botDetector: globals.botDetector,
         platform: globals.platform,
         stdio: mockStdio,

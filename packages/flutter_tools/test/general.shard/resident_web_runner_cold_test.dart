@@ -16,7 +16,6 @@ import 'package:flutter_tools/src/device.dart';
 import 'package:flutter_tools/src/isolated/devfs_web.dart';
 import 'package:flutter_tools/src/isolated/resident_web_runner.dart';
 import 'package:flutter_tools/src/project.dart';
-import 'package:flutter_tools/src/reporting/reporting.dart';
 import 'package:flutter_tools/src/resident_runner.dart';
 import 'package:flutter_tools/src/vmservice.dart';
 import 'package:test/fake.dart';
@@ -56,7 +55,6 @@ void main() {
       fileSystem: fileSystem,
       logger: BufferLogger.test(),
       systemClock: SystemClock.fixed(DateTime(0, 0, 0)),
-      usage: TestUsage(),
       analytics: getInitializedFakeAnalyticsInstance(
         fs: fileSystem,
         fakeFlutterVersion: FakeFlutterVersion(),
@@ -86,7 +84,6 @@ void main() {
       fileSystem: fileSystem,
       logger: BufferLogger.test(),
       systemClock: SystemClock.fixed(DateTime(0, 0, 0)),
-      usage: TestUsage(),
       analytics: getInitializedFakeAnalyticsInstance(
         fs: fileSystem,
         fakeFlutterVersion: FakeFlutterVersion(),
@@ -111,7 +108,6 @@ void main() {
       fileSystem: fileSystem,
       logger: BufferLogger.test(),
       systemClock: SystemClock.fixed(DateTime(0, 0, 0)),
-      usage: TestUsage(),
       analytics: getInitializedFakeAnalyticsInstance(
         fs: fileSystem,
         fakeFlutterVersion: FakeFlutterVersion(),
@@ -135,7 +131,6 @@ void main() {
       fileSystem: fileSystem,
       logger: BufferLogger.test(),
       systemClock: SystemClock.fixed(DateTime(0, 0, 0)),
-      usage: TestUsage(),
       analytics: getInitializedFakeAnalyticsInstance(
         fs: fileSystem,
         fakeFlutterVersion: FakeFlutterVersion(),
@@ -164,7 +159,6 @@ void main() {
       fileSystem: fileSystem,
       logger: BufferLogger.test(),
       systemClock: SystemClock.fixed(DateTime(0, 0, 0)),
-      usage: TestUsage(),
       analytics: getInitializedFakeAnalyticsInstance(
         fs: fileSystem,
         fakeFlutterVersion: FakeFlutterVersion(),
