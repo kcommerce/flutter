@@ -656,7 +656,7 @@ class _RawAutocompleteOptionsLayoutDelegate extends SingleChildLayoutDelegate {
   final Size? fieldSize;
 
   /// The position of the field in [RawAutocomplete.fieldViewBuilder].
-  final Offset? fieldOffset;
+  final Offset fieldOffset;
 
    /// A direction in which to open the options view overlay.
   final OptionsViewOpenDirection optionsViewOpenDirection;
@@ -677,11 +677,6 @@ class _RawAutocompleteOptionsLayoutDelegate extends SingleChildLayoutDelegate {
   // with the same maxWidth constraint as the field has.
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
-    // shouldRelayout prevents this from being called if fieldOffset or
-    // fieldSize are invalid.
-    assert(fieldSize != null && fieldSize!.isFinite);
-    assert(fieldOffset != null && fieldOffset!.isFinite);
-
     return BoxConstraints(
       // The field width may be zero if this is a split RawAutocomplete with no
       // field of its own. In that case, don't change the constraints width.
@@ -689,8 +684,8 @@ class _RawAutocompleteOptionsLayoutDelegate extends SingleChildLayoutDelegate {
       maxHeight: max(
         _kMinUsableHeight,
         switch (optionsViewOpenDirection) {
-          OptionsViewOpenDirection.down => constraints.maxHeight - fieldOffset!.dy - fieldSize!.height,
-          OptionsViewOpenDirection.up => fieldOffset!.dy,
+          OptionsViewOpenDirection.down => constraints.maxHeight - fieldOffset.dy - fieldSize!.height,
+          OptionsViewOpenDirection.up => fieldOffset.dy,
         },
       ),
     );
@@ -700,30 +695,23 @@ class _RawAutocompleteOptionsLayoutDelegate extends SingleChildLayoutDelegate {
   // side based on text direction.
   @override
   Offset getPositionForChild(Size size, Size childSize) {
-    // shouldRelayout prevents this from being called if fieldOffset or
-    // fieldSize are invalid.
-    assert(fieldSize != null && fieldSize!.isFinite);
-    assert(fieldOffset != null && fieldOffset!.isFinite);
-
-    return Offset(
-      switch (textDirection) {
-        TextDirection.ltr => 0.0,
-        TextDirection.rtl => fieldSize!.width - childSize.width,
-      },
-      switch (optionsViewOpenDirection) {
-        OptionsViewOpenDirection.down => min(
-          fieldSize!.height,
-          size.height - childSize.height - fieldOffset!.dy,
-        ),
-        OptionsViewOpenDirection.up => size.height - min(childSize.height, fieldOffset!.dy),
-      }
-    );
+    final double dx = switch (textDirection) {
+      TextDirection.ltr => 0.0,
+      TextDirection.rtl => fieldSize!.width - childSize.width,
+    };
+    final double dy = switch (optionsViewOpenDirection) {
+      OptionsViewOpenDirection.down => min(
+        fieldSize!.height,
+        size.height - childSize.height - fieldOffset.dy,
+      ),
+      OptionsViewOpenDirection.up => size.height - min(childSize.height, fieldOffset.dy),
+    };
+    return Offset(dx, dy);
   }
 
   @override
   bool shouldRelayout(_RawAutocompleteOptionsLayoutDelegate oldDelegate) {
-    if (fieldOffset == null || !fieldOffset!.isFinite
-        || fieldSize == null || !fieldSize!.isFinite) {
+    if (!fieldOffset.isFinite || fieldSize == null || !fieldSize!.isFinite) {
       return false;
     }
     return fieldSize != oldDelegate.fieldSize
