@@ -12,7 +12,8 @@
 /// @docImport 'tween_animation_builder.dart';
 library;
 
-import 'dart:ui' as ui show TextHeightBehavior;
+import 'dart:math' as math;
+import 'dart:ui' as ui show TextHeightBehavior, lerpDouble;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
@@ -27,6 +28,8 @@ import 'ticker_provider.dart';
 import 'transitions.dart';
 
 // Examples can assume:
+// late ValueAnimation<Object?> _animation;
+// late Object? newValue;
 // class MyWidget extends ImplicitlyAnimatedWidget {
 //   const MyWidget({super.key, this.targetColor = Colors.black}) : super(duration: const Duration(seconds: 1));
 //   final Color targetColor;
@@ -566,6 +569,227 @@ abstract class AnimatedWidgetBaseState<T extends ImplicitlyAnimatedWidget> exten
 
   void _handleAnimationChanged() {
     setState(() { /* The animation ticked. Rebuild with new animation value */ });
+  }
+}
+
+/// Function signature for linear interpolation.
+/// 
+/// This signature is designed to match existing "lerp" functions;
+/// for example, [Color.lerp] can qualify as a `LerpCallback<Color>`
+/// or `LerpCallback<Color?>`.
+typedef LerpCallback<T> = T? Function(T a, T b, double t);
+
+/// A [ValueListenable] whose [value] updates each frame
+/// over the specified [duration] to create a continuous visual transition.
+class ValueAnimation<T> extends Animator<T, ValueAnimation<T>> {
+  /// Creates a [ValueListenable] that smoothly animates between values.
+  ///
+  /// {@macro flutter.widgets.ValueAnimation.value_setter}
+  ValueAnimation({
+    required super.vsync,
+    required T initialValue,
+    required this.duration,
+    this.curve = Curves.linear,
+    LerpCallback<T>? lerp,
+    super.animationBehavior,
+    super.debugLabel
+  }) : _from = initialValue,
+       _target = initialValue,
+       _value = initialValue,
+       lerp = lerp ?? lerpCallbackOfExactType<T>();
+
+  /// The length of time this animation should last.
+  ///
+  /// The duration can be adjusted at any time, but modifying it
+  /// while an animation is active could result in sudden visual changes.
+  Duration duration;
+
+  /// Determines how quickly the animation speeds up and slows down.
+  ///
+  /// For instance, if this is set to [Curves.easeOutExpo], the majority of
+  /// the change to the [value] happens right away, whereas [Curves.easeIn]
+  /// would start slowly and then pick up speed toward the end.
+  Curve curve;
+
+  /// A function to use for linear interpolation between [value]s.
+  ///
+  /// {@tool snippet}
+  /// Rather than creating a [LerpCallback] for the animation, consider
+  /// using the predefined function for that type. For example, [Color.lerp]
+  /// can be used for a `ValueAnimation<Color>`.
+  ///
+  /// ```dart
+  /// class _MyState extends State<StatefulWidget> with SingleTickerProviderMixin {
+  ///   late final ValueAnimation<Color> colorAnimation = ValueAnimation<Color>(
+  ///     tickerProvider: this,
+  ///     initialValue: Colors.black,
+  ///     duration: Durations.medium1,
+  ///     lerp: Color.lerp,
+  ///   );
+  ///
+  ///   // ...
+  /// }
+  /// ```
+  /// {@end-tool}
+  final LerpCallback<T> lerp;
+
+  /// Returns the [LerpCallback] corresponding to the provided type argument.
+  ///
+  /// This function covers each of the relevant types defined in `dart:ui`
+  /// and Flutter's widgets library. For other lerp functions, consider
+  /// passing a callback directly.
+  static LerpCallback<T> lerpCallbackOfExactType<T>() => switch (T) {
+    // dart format off
+    const (double)                  => ui.lerpDouble,
+    const (Offset)                  => Offset.lerp,
+    const (Size)                    => Size.lerp,
+    const (Rect)                    => Rect.lerp,
+    const (Radius)                  => Radius.lerp,
+    const (RRect)                   => RRect.lerp,
+    const (Color)                   => Color.lerp,
+    const (Shadow)                  => Shadow.lerp,
+    const (List<Shadow>)            => Shadow.lerpList,
+    const (FontWeight)              => FontWeight.lerp,
+    const (FontVariation)           => FontVariation.lerp,
+    const (AlignmentGeometry)       => AlignmentGeometry.lerp,
+    const (Alignment)               => Alignment.lerp,
+    const (AlignmentDirectional)    => AlignmentDirectional.lerp,
+    const (BorderRadiusGeometry)    => BorderRadiusGeometry.lerp,
+    const (BorderRadius)            => BorderRadius.lerp,
+    const (BorderRadiusDirectional) => BorderRadiusDirectional.lerp,
+    const (BorderSide)              => BorderSide.lerp,
+    const (ShapeBorder)             => ShapeBorder.lerp,
+    const (OutlinedBorder)          => OutlinedBorder.lerp,
+    const (BoxBorder)               => BoxBorder.lerp,
+    const (Border)                  => Border.lerp,
+    const (BorderDirectional)       => BorderDirectional.lerp,
+    const (BoxDecoration)           => BoxDecoration.lerp,
+    const (BoxShadow)               => BoxShadow.lerp,
+    const (List<BoxShadow>)         => BoxShadow.lerpList,
+    const (HSVColor)                => HSVColor.lerp,
+    const (HSLColor)                => HSLColor.lerp,
+    const (ColorSwatch)             => ColorSwatch.lerp,
+    const (DecorationImage)         => DecorationImage.lerp,
+    const (Decoration)              => Decoration.lerp,
+    const (EdgeInsetsGeometry)      => EdgeInsetsGeometry.lerp,
+    const (EdgeInsets)              => EdgeInsets.lerp,
+    const (EdgeInsetsDirectional)   => EdgeInsetsDirectional.lerp,
+    const (FractionalOffset)        => FractionalOffset.lerp,
+    const (Gradient)                => Gradient.lerp,
+    const (LinearGradient)          => LinearGradient.lerp,
+    const (RadialGradient)          => RadialGradient.lerp,
+    const (SweepGradient)           => SweepGradient.lerp,
+    const (LinearBorderEdge)        => LinearBorderEdge.lerp,
+    const (ShapeDecoration)         => ShapeDecoration.lerp,
+    const (TextStyle)               => TextStyle.lerp,
+    const (BoxConstraints)          => BoxConstraints.lerp,
+    const (RelativeRect)            => RelativeRect.lerp,
+    const (TableBorder)             => TableBorder.lerp,
+    // dart format on
+    _ => throw ArgumentError(
+      'The type argument <$T> is not supported for lerpCallbackOfExactType(). '
+      'Consider passing a "lerp" function directly.',
+    ),
+  } as LerpCallback<T>;
+
+  T _from;
+  T _target;
+  T _value;
+
+  @override
+  T get value => _value;
+
+  /// {@template flutter.widgets.ValueAnimation.value_setter}
+  /// Rather than updating immediately, changes to the [value] will *animate*
+  /// each time a new target is set, using the provided [duration], [curve],
+  /// and [lerp] callback.
+  /// {@endtemplate}
+  ///
+  /// To cause an immediate change to the value, consider calling [animateTo]
+  /// or [animateBack] with a non-null `from` parameter, or calling [jumpTo].
+  set value(T newTarget) {
+    animateTo(newTarget);
+  }
+
+  TickerFuture _animate(
+    T target, {
+    T? from,
+    Duration? duration,
+    Curve? curve,
+    required bool forward,
+  }) {
+    stop();
+
+    if (duration != null) {
+      this.duration = duration;
+    }
+    if (curve != null) {
+      this.curve = curve;
+    }
+    if (from == null && target == value) {
+      return TickerFuture.complete();
+    }
+    if (this.duration == Duration.zero || !animationBehavior.enableAnimations) {
+      value = target;
+      _statusUpdate(AnimationStatus.completed);
+      return TickerFuture.complete();
+    }
+
+    _from = from ?? value;
+    _target = target;
+    _value = lerp(_from, _target, 0) as T;
+    final TickerFuture result = startTicker();
+    _statusUpdate(forward ? AnimationStatus.forward : AnimationStatus.reverse);
+    return result;
+  }
+
+  @override
+  TickerFuture animateTo(T target, {T? from, Duration? duration, Curve? curve}) {
+    assert(debugCheckNotDisposed('animateTo'));
+    return _animate(target, from: from, duration: duration, curve: curve, forward: true);
+  }
+
+
+  @override
+  TickerFuture animateBack(T target, {T? from, Duration? duration, Curve? curve}) {
+    assert(debugCheckNotDisposed('animateBack'));
+    return _animate(target, from: from, duration: duration, curve: curve, forward: false);
+  }
+
+  /// Immediately set a new value.
+  /// 
+  /// {@macro flutter.animation.Animator.ticker_canceled}
+  void jumpTo(T target) {
+    stop();
+    _from = _value = _target = target;
+    notifyListeners();
+  }
+
+  @protected
+  @override
+  void tick(Duration elapsed) {
+    late final double progress = elapsed.inMicroseconds / duration.inMicroseconds;
+
+    if (_value == _target || progress >= 1.0) {
+      _value = _target;
+      _statusUpdate(AnimationStatus.completed);
+      stop(canceled: false);
+    } else {
+      final double t = curve.transform(math.max(progress, 0.0));
+      _value = lerp(_from, _target, t) as T;
+    }
+    notifyListeners();
+  }
+
+  @override
+  AnimationStatus get status => _status;
+  AnimationStatus _status = AnimationStatus.dismissed;
+  void _statusUpdate(AnimationStatus value) {
+    if (value == _status) {
+      return;
+    }
+    _status = value;
+    notifyStatusListeners(value);
   }
 }
 
