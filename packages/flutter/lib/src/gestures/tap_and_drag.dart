@@ -1169,17 +1169,17 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
     }
 
     final Offset correctedLocalPosition = _initialPosition.local + localDelta;
-    final Matrix4? localToGlobal = event.transform != null ? Matrix4.tryInvert(event.transform!) : null;
+    final Matrix4? localToGlobalTransform = event.transform != null ? Matrix4.tryInvert(event.transform!) : null;
     final Offset globalUpdateDelta = PointerEvent.transformDeltaViaPositions(
-      untransformedEndPosition: correctedLocalPosition,
+      transform: localToGlobalTransform,
       untransformedDelta: localDelta,
-      transform: localToGlobal,
+      untransformedEndPosition: correctedLocalPosition,
     );
     return OffsetPair(local: localDelta, global: globalUpdateDelta);
   }
 
   void _updateCurrentPosition(OffsetPair delta) {
-    _currentPosition = _currentPosition + delta;
+    _currentPosition += delta;
   }
 
   void _acceptDrag(PointerEvent event) {
@@ -1187,24 +1187,24 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
       return;
     }
     if (dragStartBehavior == DragStartBehavior.start) {
-      _initialPosition = _initialPosition + OffsetPair(global: event.delta, local: event.localDelta);
+      _initialPosition += OffsetPair(global: event.delta, local: event.localDelta);
       _currentPosition = _initialPosition;
     }
     _checkDragStart(event);
     if (event.localDelta != Offset.zero) {
       final OffsetPair delta = _calculateDragUpdateDelta(event);
       _updateCurrentPosition(delta);
-      _checkDragUpdate(event, override: _initialPosition + delta);
+      _checkDragUpdate(event, corrected: _initialPosition + delta);
     }
   }
 
   void _checkDrag(PointerMoveEvent event) {
-    final Matrix4? localToGlobalTransform = event.transform == null ? null : Matrix4.tryInvert(event.transform!);
+    final Matrix4? localToGlobalTransform = event.transform != null ? Matrix4.tryInvert(event.transform!) : null;
     final Offset movedLocally = _getDeltaForDetails(event.localDelta);
     _globalDistanceMoved += PointerEvent.transformDeltaViaPositions(
       transform: localToGlobalTransform,
       untransformedDelta: movedLocally,
-      untransformedEndPosition: event.localPosition
+      untransformedEndPosition: event.localPosition,
     ).distance * (_getPrimaryValueFromOffset(movedLocally) ?? 1).sign;
     _globalDistanceMovedAllAxes += PointerEvent.transformDeltaViaPositions(
       transform: localToGlobalTransform,
@@ -1280,9 +1280,9 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
     _start = null;
   }
 
-  void _checkDragUpdate(PointerEvent event, {OffsetPair? override}) {
-    final Offset globalPosition = override?.global ?? event.position;
-    final Offset localPosition = override?.local ?? event.localPosition;
+  void _checkDragUpdate(PointerEvent event, {OffsetPair? corrected}) {
+    final Offset globalPosition = corrected?.global ?? event.position;
+    final Offset localPosition = corrected?.local ?? event.localPosition;
 
     final TapDragUpdateDetails details =  TapDragUpdateDetails(
       sourceTimeStamp: event.timeStamp,
@@ -1307,7 +1307,6 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
   }
 
   void _checkDragEnd() {
-    // The `_currentPosition` cannot be null if no `down` event has been triggered.
     final Offset globalPosition = _currentPosition.global;
     final Offset localPosition = _currentPosition.local;
 
