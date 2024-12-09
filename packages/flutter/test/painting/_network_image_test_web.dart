@@ -105,6 +105,43 @@ void runTests() {
         'HTTP request failed, statusCode: 200, https://www.example.com/images/frame3.png');
   });
 
+  testWidgets('When strategy is default, emits an error if the image is cross-origin',
+      (WidgetTester tester) async {
+    final TestHttpRequest failingRequest = TestHttpRequest()
+      ..status = 500
+      ..mockEvent = MockEvent('load', web.Event('bytes inaccessible'))
+      ..response = (Uint8List.fromList(<int>[])).buffer;
+
+    httpRequestFactory = () {
+      return failingRequest.getMock() as web_shim.XMLHttpRequest;
+    };
+
+    imgElementFactory = () {
+      throw UnimplementedError();
+    };
+
+    const NetworkImage networkImage = NetworkImage('https://www.example.com/images/frame5.png');
+    ImageInfo? imageInfo;
+    Object? recordedError;
+    Completer<void>? imageCompleter;
+    await tester.runAsync(() async {
+      imageCompleter = Completer<void>();
+      final ImageStream stream = networkImage.resolve(ImageConfiguration.empty);
+      stream.addListener(ImageStreamListener((ImageInfo info, bool isSync) {
+        imageInfo = info;
+        imageCompleter!.complete();
+      }, onError: (Object error, StackTrace? stackTrace) {
+        recordedError = error;
+        imageCompleter!.complete();
+      }));
+    });
+    await tester.runAsync(() async {
+      await imageCompleter!.future;
+    });
+    expect(recordedError, isNotNull);
+    expect(imageInfo, isNull);
+  }, skip: !isSkiaWeb);
+
   testWidgets('When strategy is .whenNecessary, emits a WebImageInfo if the image is cross-origin',
       (WidgetTester tester) async {
     final TestHttpRequest failingRequest = TestHttpRequest()
