@@ -1176,7 +1176,6 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
       final OffsetPair updateDelta = OffsetPair(local: event.localDelta, global: globalUpdateDelta);
       _correctedPosition = _initialPosition + updateDelta; // Only adds delta for down behaviour
       _checkDragUpdate(event);
-      _correctedPosition = null;
     }
   }
 
@@ -1311,6 +1310,7 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
       invokeCallback<void>('onDragEnd', () => onDragEnd!(endDetails));
     }
 
+    _correctedPosition = null;
     _resetTaps();
     _resetDragUpdateThrottle();
   }
