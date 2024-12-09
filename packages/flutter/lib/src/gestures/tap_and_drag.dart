@@ -1055,7 +1055,7 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
               }
               _dragState = _DragState.accepted;
               _acceptDrag(currentDown!);
-              _checkDragEnd(currentDown);
+              _checkDragEnd();
             }
           } else {
             _checkCancel();
@@ -1071,7 +1071,7 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
       case _DragState.accepted:
         // For the case when the pointer has been accepted as a drag.
         // Meaning [_checkTapDown] and [_checkDragStart] have already ran.
-        _checkDragEnd(currentDown);
+        _checkDragEnd();
     }
 
     _stopDeadlineTimer();
@@ -1106,7 +1106,13 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
       _pastSlopTolerance = _pastSlopTolerance || _getGlobalDistance(event, _initialPosition) > computedSlop;
 
       if (_dragState == _DragState.accepted) {
-        _checkDragUpdate(event);
+        final OffsetPair? updateDelta = _calculateDragUpdateDelta(event);
+        if (updateDelta != null) {
+          // Only adds delta for down behaviour.
+          _correctedPosition ??= _initialPosition;
+          _correctedPosition = _correctedPosition! + updateDelta;
+        }
+        _checkDragUpdate(event, delta: updateDelta);
       } else if (_dragState == _DragState.possible) {
         if (_start == null) {
           // Only check for a drag if the start of a drag was not already identified.
@@ -1157,6 +1163,24 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
   @override
   String get debugDescription => 'tap_and_drag';
 
+  /// Calculates the update delta from the given pointer event.
+  OffsetPair? _calculateDragUpdateDelta(PointerEvent event) {
+    final Offset localDelta = event.localDelta;
+
+    if (localDelta == Offset.zero) {
+      return null;
+    }
+
+    final Offset correctedLocalPosition = _initialPosition.local + localDelta;
+    final Matrix4? localToGlobal = event.transform != null ? Matrix4.tryInvert(event.transform!) : null;
+    final Offset globalUpdateDelta = PointerEvent.transformDeltaViaPositions(
+      untransformedEndPosition: correctedLocalPosition,
+      untransformedDelta: localDelta,
+      transform: localToGlobal,
+    );
+    return OffsetPair(local: localDelta, global: globalUpdateDelta);
+  }
+
   void _acceptDrag(PointerEvent event) {
     if (!_wonArenaForPrimaryPointer) {
       return;
@@ -1166,16 +1190,13 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
     }
     _checkDragStart(event);
     if (event.localDelta != Offset.zero) {
-      final Matrix4? localToGlobal = event.transform != null ? Matrix4.tryInvert(event.transform!) : null;
-      final Offset correctedLocalPosition = _initialPosition.local + event.localDelta;
-      final Offset globalUpdateDelta = PointerEvent.transformDeltaViaPositions(
-        untransformedEndPosition: correctedLocalPosition,
-        untransformedDelta: event.localDelta,
-        transform: localToGlobal,
-      );
-      final OffsetPair updateDelta = OffsetPair(local: event.localDelta, global: globalUpdateDelta);
-      _correctedPosition = _initialPosition + updateDelta; // Only adds delta for down behaviour
-      _checkDragUpdate(event);
+      final OffsetPair? updateDelta = _calculateDragUpdateDelta(event);
+      if (updateDelta != null) {
+        // Only adds delta for down behaviour.
+        _correctedPosition ??= _initialPosition;
+        _correctedPosition = _correctedPosition! + updateDelta;
+      }
+      _checkDragUpdate(event, delta: updateDelta);
     }
   }
 
@@ -1261,9 +1282,9 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
     _start = null;
   }
 
-  void _checkDragUpdate(PointerEvent event) {
-    final Offset globalPosition = _correctedPosition != null ? _correctedPosition!.global : event.position;
-    final Offset localPosition = _correctedPosition != null ? _correctedPosition!.local : event.localPosition;
+  void _checkDragUpdate(PointerEvent event, {OffsetPair? delta}) {
+    final Offset globalPosition = event.position + (delta?.global ?? Offset.zero);
+    final Offset localPosition = event.localPosition + (delta?.local ?? Offset.zero);
 
     final TapDragUpdateDetails details =  TapDragUpdateDetails(
       sourceTimeStamp: event.timeStamp,
@@ -1287,9 +1308,11 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
     }
   }
 
-  void _checkDragEnd(PointerEvent? event) {
-    final Offset? globalPosition = _correctedPosition != null ? _correctedPosition!.global : event?.position;
-    final Offset? localPosition = _correctedPosition != null ? _correctedPosition!.local : event?.localPosition;
+  void _checkDragEnd() {
+    // The `_correctedPosition` can be null if no `down` event has been triggered.
+    final Offset globalPosition = _correctedPosition?.global ?? Offset.zero;
+    // Local position should fallback to the global if not specified.
+    final Offset localPosition = _correctedPosition?.local ?? globalPosition;
 
     if (_dragUpdateThrottleTimer != null) {
       // If there's already an update scheduled, trigger it immediately and
@@ -1298,18 +1321,18 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
       _handleDragUpdateThrottled();
     }
 
-    final TapDragEndDetails endDetails =
-      TapDragEndDetails(
-        globalPosition: globalPosition ?? Offset.zero,
-        localPosition: localPosition,
-        primaryVelocity: 0.0,
-        consecutiveTapCount: consecutiveTapCount,
-      );
+    final TapDragEndDetails endDetails = TapDragEndDetails(
+      globalPosition: globalPosition,
+      localPosition: localPosition,
+      primaryVelocity: 0.0,
+      consecutiveTapCount: consecutiveTapCount,
+    );
 
     if (onDragEnd != null) {
       invokeCallback<void>('onDragEnd', () => onDragEnd!(endDetails));
     }
 
+    // Removes the corrected position once consumed by the drag end event.
     _correctedPosition = null;
     _resetTaps();
     _resetDragUpdateThrottle();
