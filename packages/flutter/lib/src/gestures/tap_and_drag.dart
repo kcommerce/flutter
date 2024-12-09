@@ -373,11 +373,14 @@ class TapDragEndDetails with Diagnosticable {
     this.velocity = Velocity.zero,
     this.primaryVelocity,
     required this.consecutiveTapCount,
+    this.globalPosition = Offset.zero,
+    Offset? localPosition,
   }) : assert(
          primaryVelocity == null
            || primaryVelocity == velocity.pixelsPerSecond.dx
            || primaryVelocity == velocity.pixelsPerSecond.dy,
-       );
+       ),
+       localPosition = localPosition ?? globalPosition;
 
   /// The velocity the pointer was moving when it stopped contacting the screen.
   ///
@@ -400,12 +403,28 @@ class TapDragEndDetails with Diagnosticable {
   /// the number in the series this tap is.
   final int consecutiveTapCount;
 
+  /// The pointer's global position when it triggered this update.
+  ///
+  /// See also:
+  ///
+  ///  * [localPosition], which is the [globalPosition] transformed to the
+  ///    coordinate space of the event receiver.
+  final Offset globalPosition;
+
+  /// The local position in the coordinate system of the event receiver at
+  /// which the pointer contacted the screen.
+  ///
+  /// Defaults to [globalPosition] if not specified in the constructor.
+  final Offset localPosition;
+
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
     properties.add(DiagnosticsProperty<Velocity>('velocity', velocity));
     properties.add(DiagnosticsProperty<double?>('primaryVelocity', primaryVelocity));
     properties.add(DiagnosticsProperty<int>('consecutiveTapCount', consecutiveTapCount));
+    properties.add(DiagnosticsProperty<Offset>('globalPosition', globalPosition));
+    properties.add(DiagnosticsProperty<Offset>('localPosition', localPosition));
   }
 }
 
@@ -1036,7 +1055,7 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
               }
               _dragState = _DragState.accepted;
               _acceptDrag(currentDown!);
-              _checkDragEnd();
+              _checkDragEnd(currentDown);
             }
           } else {
             _checkCancel();
@@ -1052,7 +1071,7 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
       case _DragState.accepted:
         // For the case when the pointer has been accepted as a drag.
         // Meaning [_checkTapDown] and [_checkDragStart] have already ran.
-        _checkDragEnd();
+        _checkDragEnd(currentDown);
     }
 
     _stopDeadlineTimer();
@@ -1269,7 +1288,10 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
     }
   }
 
-  void _checkDragEnd() {
+  void _checkDragEnd(PointerEvent? event) {
+    final Offset? globalPosition = _correctedPosition != null ? _correctedPosition!.global : event?.position;
+    final Offset? localPosition = _correctedPosition != null ? _correctedPosition!.local : event?.localPosition;
+
     if (_dragUpdateThrottleTimer != null) {
       // If there's already an update scheduled, trigger it immediately and
       // cancel the timer.
@@ -1279,6 +1301,8 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
 
     final TapDragEndDetails endDetails =
       TapDragEndDetails(
+        globalPosition: globalPosition ?? Offset.zero,
+        localPosition: localPosition,
         primaryVelocity: 0.0,
         consecutiveTapCount: consecutiveTapCount,
       );
