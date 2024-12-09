@@ -918,9 +918,9 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
   _DragState _dragState = _DragState.ready;
   PointerEvent? _start;
   late OffsetPair _initialPosition;
+  late OffsetPair _currentPosition;
   late double _globalDistanceMoved;
   late double _globalDistanceMovedAllAxes;
-  OffsetPair? _currentPosition;
 
   // For drag update throttle.
   TapDragUpdateDetails? _lastDragUpdateDetails;
@@ -980,6 +980,7 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
       _globalDistanceMovedAllAxes = 0.0;
       _dragState = _DragState.possible;
       _initialPosition = OffsetPair(global: event.position, local: event.localPosition);
+      _currentPosition = _initialPosition;
       _deadlineTimer = Timer(_deadline, () => _didExceedDeadlineWithEvent(event));
     }
   }
@@ -1178,8 +1179,7 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
   }
 
   void _updateCurrentPosition(OffsetPair delta) {
-    _currentPosition ??= _initialPosition;
-    _currentPosition = _currentPosition! + delta;
+    _currentPosition = _currentPosition + delta;
   }
 
   void _acceptDrag(PointerEvent event) {
@@ -1188,6 +1188,7 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
     }
     if (dragStartBehavior == DragStartBehavior.start) {
       _initialPosition = _initialPosition + OffsetPair(global: event.delta, local: event.localDelta);
+      _currentPosition = _initialPosition;
     }
     _checkDragStart(event);
     if (event.localDelta != Offset.zero) {
@@ -1307,8 +1308,8 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
 
   void _checkDragEnd() {
     // The `_currentPosition` cannot be null if no `down` event has been triggered.
-    final Offset globalPosition = _currentPosition!.global;
-    final Offset localPosition = _currentPosition!.local;
+    final Offset globalPosition = _currentPosition.global;
+    final Offset localPosition = _currentPosition.local;
 
     if (_dragUpdateThrottleTimer != null) {
       // If there's already an update scheduled, trigger it immediately and
@@ -1328,8 +1329,6 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
       invokeCallback<void>('onDragEnd', () => onDragEnd!(endDetails));
     }
 
-    // Resets the moved position once consumed by the drag end event.
-    _currentPosition = null;
     _resetTaps();
     _resetDragUpdateThrottle();
   }
