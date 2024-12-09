@@ -105,7 +105,7 @@ void runTests() {
         'HTTP request failed, statusCode: 200, https://www.example.com/images/frame3.png');
   });
 
-  testWidgets('emits a WebImageInfo if the image is cross-origin',
+  testWidgets('When strategy is .whenNecessary, emits a WebImageInfo if the image is cross-origin',
       (WidgetTester tester) async {
     final TestHttpRequest failingRequest = TestHttpRequest()
       ..status = 500
@@ -121,7 +121,10 @@ void runTests() {
       return testImg.getMock() as web_shim.HTMLImageElement;
     };
 
-    const NetworkImage networkImage = NetworkImage('https://www.example.com/images/frame4.png');
+    const NetworkImage networkImage = NetworkImage(
+      'https://www.example.com/images/frame4.png',
+      webImgElementStrategy: WebImgElementStrategy.whenNecessary,
+    );
     ImageInfo? imageInfo;
     Object? recordedError;
     Completer<void>? imageCompleter;
@@ -147,7 +150,7 @@ void runTests() {
     expect(webImageInfo.htmlImage.src, equals('https://www.example.com/images/frame4.png'));
   }, skip: !isSkiaWeb);
 
-  testWidgets('emits an error if the image is cross-origin but fails to decode',
+  testWidgets('When strategy is .whenNecessary, emits an error if the image is cross-origin but fails to decode',
       (WidgetTester tester) async {
     final TestHttpRequest failingRequest = TestHttpRequest()
       ..status = 500
@@ -163,7 +166,10 @@ void runTests() {
       return testImg.getMock() as web_shim.HTMLImageElement;
     };
 
-    const NetworkImage networkImage = NetworkImage('https://www.example.com/images/frame5.png');
+    const NetworkImage networkImage = NetworkImage(
+      'https://www.example.com/images/frame5.png',
+      webImgElementStrategy: WebImgElementStrategy.whenNecessary,
+    );
     ImageInfo? imageInfo;
     Object? recordedError;
     Completer<void>? imageCompleter;

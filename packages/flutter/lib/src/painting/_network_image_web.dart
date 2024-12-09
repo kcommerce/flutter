@@ -230,7 +230,9 @@ class NetworkImage
         return loadViaImgElement();
       case image_provider.WebImgElementStrategy.whenNecessary:
         try {
-          return loadViaDecode();
+          // Await here so that errors occurred during the asynchronous process
+          // of `loadViaDecode` are caught and triggers `loadViaImgElement`.
+          return await loadViaDecode();
         } catch (e) {
           return loadViaImgElement();
         }
