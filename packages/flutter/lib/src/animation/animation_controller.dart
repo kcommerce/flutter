@@ -71,7 +71,14 @@ enum AnimationBehavior {
   /// This is the default for repeating animations in order to prevent them from
   /// flashing rapidly on the screen if the widget does not take the
   /// [AccessibilityFeatures.disableAnimations] flag into account.
-  preserve,
+  preserve;
+
+  /// Whether animations should be enabled, based on the configured behavior
+  /// and the [AccessibilityFeatures.disableAnimations] flag.
+  bool get enableAnimations => switch (this) {
+    normal   => !SemanticsBinding.instance.disableAnimations,
+    preserve => true,
+  };
 }
 
 /// A controller for an animation.
@@ -253,10 +260,9 @@ class AnimationController extends Animation<double>
     this.upperBound = 1.0,
     this.animationBehavior = AnimationBehavior.normal,
     required TickerProvider vsync,
-  }) : assert(upperBound >= lowerBound),
-       _direction = _AnimationDirection.forward {
+  }) : assert(upperBound >= lowerBound) {
     if (kFlutterMemoryAllocationsEnabled) {
-      _maybeDispatchObjectCreation();
+      _dispatchObjectCreation();
     }
     _ticker = vsync.createTicker(_tick);
     _internalSetValue(value ?? lowerBound);
@@ -287,24 +293,21 @@ class AnimationController extends Animation<double>
     required TickerProvider vsync,
     this.animationBehavior = AnimationBehavior.preserve,
   }) : lowerBound = double.negativeInfinity,
-       upperBound = double.infinity,
-       _direction = _AnimationDirection.forward {
+       upperBound = double.infinity {
     if (kFlutterMemoryAllocationsEnabled) {
-      _maybeDispatchObjectCreation();
+      _dispatchObjectCreation();
     }
     _ticker = vsync.createTicker(_tick);
     _internalSetValue(value);
   }
 
   /// Dispatches event of object creation to [FlutterMemoryAllocations.instance].
-  void _maybeDispatchObjectCreation() {
-    if (kFlutterMemoryAllocationsEnabled) {
-      FlutterMemoryAllocations.instance.dispatchObjectCreated(
-        library: _flutterAnimationLibrary,
-        className: '$AnimationController',
-        object: this,
-      );
-    }
+  void _dispatchObjectCreation() {
+    FlutterMemoryAllocations.instance.dispatchObjectCreated(
+      library: _flutterAnimationLibrary,
+      className: '$AnimationController',
+      object: this,
+    );
   }
 
   /// The value at which this animation is deemed to be dismissed.
@@ -455,7 +458,7 @@ class AnimationController extends Animation<double>
   @override
   bool get isAnimating => _ticker != null && _ticker!.isActive;
 
-  _AnimationDirection _direction;
+  _AnimationDirection _direction = _AnimationDirection.forward;
 
   @override
   AnimationStatus get status => _status;
@@ -652,15 +655,11 @@ class AnimationController extends Animation<double>
   }
 
   TickerFuture _animateToInternal(double target, { Duration? duration, Curve curve = Curves.linear }) {
-    final double scale = switch (animationBehavior) {
-      // Since the framework cannot handle zero duration animations, we run it at 5% of the normal
-      // duration to limit most animations to a single frame.
-      // Ideally, the framework would be able to handle zero duration animations, however, the common
-      // pattern of an eternally repeating animation might cause an endless loop if it weren't delayed
-      // for at least one frame.
-      AnimationBehavior.normal when SemanticsBinding.instance.disableAnimations => 0.05,
-      AnimationBehavior.normal || AnimationBehavior.preserve => 1.0,
-    };
+    // Ideally, the framework would be able to handle zero duration animations; however, the common
+    // pattern of an eternally repeating animation might cause an endless loop if it weren't delayed
+    // for at least one frame.
+    // Instead, we run it at 5% of the normal duration to limit most animations to a single frame.
+    final double scale = animationBehavior.enableAnimations ? 1.0 : 0.05;
     Duration? simulationDuration = duration;
     if (simulationDuration == null) {
       assert(!(this.duration == null && _direction == _AnimationDirection.forward));
@@ -782,11 +781,8 @@ class AnimationController extends Animation<double>
     final double target = velocity < 0.0 ? lowerBound - _kFlingTolerance.distance
                                          : upperBound + _kFlingTolerance.distance;
     final AnimationBehavior behavior = animationBehavior ?? this.animationBehavior;
-    final double scale = switch (behavior) {
-      // This is arbitrary (it was chosen because it worked for the drawer widget).
-      AnimationBehavior.normal when SemanticsBinding.instance.disableAnimations => 200.0,
-      AnimationBehavior.normal || AnimationBehavior.preserve => 1.0,
-    };
+    // The "200.0" value is arbitrary (it was chosen because it worked for the drawer widget).
+    final double scale = behavior.enableAnimations ? 1.0 : 200.0;
     final SpringSimulation simulation = SpringSimulation(springDescription, value, target, velocity * scale)
       ..tolerance = _kFlingTolerance;
     assert(
