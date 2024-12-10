@@ -412,7 +412,7 @@ class Image extends StatefulWidget {
   ///
   /// In case that configuring the host is not available, such as when images
   /// are hosted on a CDN or from arbitrary URLs, the app can set the
-  /// `webImgElementStrategy` parameter of [Image.network] to display the image
+  /// `useImgElement` parameter of [Image.network] to display the image
   /// in an HTML <img> element, which bypasses the same-origin policy.
   ///
   /// The <img> element is placed in a platform view, and therefore has the
@@ -450,11 +450,11 @@ class Image extends StatefulWidget {
     Map<String, String>? headers,
     int? cacheWidth,
     int? cacheHeight,
-    WebImgElementStrategy webImgElementStrategy = WebImgElementStrategy.never,
+    WebImgElementStrategy useImgElement = WebImgElementStrategy.never,
   }) : image = ResizeImage.resizeIfNeeded(
          cacheWidth,
          cacheHeight,
-         NetworkImage(src, scale: scale, headers: headers, webImgElementStrategy: webImgElementStrategy),
+         NetworkImage(src, scale: scale, headers: headers, useImgElement: useImgElement),
        ),
        assert(cacheWidth == null || cacheWidth > 0),
        assert(cacheHeight == null || cacheHeight > 0);

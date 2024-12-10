@@ -68,7 +68,7 @@ class NetworkImage
     this.url, {
     this.scale = 1.0,
     this.headers,
-    this.webImgElementStrategy = image_provider.WebImgElementStrategy.never,
+    this.useImgElement = image_provider.WebImgElementStrategy.never,
   });
 
   @override
@@ -81,7 +81,7 @@ class NetworkImage
   final Map<String, String>? headers;
 
   @override
-  final image_provider.WebImgElementStrategy webImgElementStrategy;
+  final image_provider.WebImgElementStrategy useImgElement;
 
   @override
   Future<NetworkImage> obtainKey(image_provider.ImageConfiguration configuration) {
@@ -223,7 +223,7 @@ class NetworkImage
       );
     }
 
-    switch (webImgElementStrategy) {
+    switch (useImgElement) {
       case image_provider.WebImgElementStrategy.never:
         return loadViaDecode();
       case image_provider.WebImgElementStrategy.always:

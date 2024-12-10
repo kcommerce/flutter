@@ -160,7 +160,7 @@ void runTests() {
 
     const NetworkImage networkImage = NetworkImage(
       'https://www.example.com/images/frame5.png',
-      webImgElementStrategy: WebImgElementStrategy.whenNecessary,
+      useImgElement: WebImgElementStrategy.whenNecessary,
     );
     ImageInfo? imageInfo;
     Object? recordedError;
@@ -205,7 +205,7 @@ void runTests() {
 
     const NetworkImage networkImage = NetworkImage(
       'https://www.example.com/images/frame6.png',
-      webImgElementStrategy: WebImgElementStrategy.whenNecessary,
+      useImgElement: WebImgElementStrategy.whenNecessary,
     );
     ImageInfo? imageInfo;
     Object? recordedError;
@@ -247,7 +247,7 @@ void runTests() {
 
     const NetworkImage networkImage = NetworkImage(
       'https://www.example.com/images/frame7.png',
-      webImgElementStrategy: WebImgElementStrategy.always,
+      useImgElement: WebImgElementStrategy.always,
     );
     ImageInfo? imageInfo;
     Object? recordedError;
@@ -292,7 +292,7 @@ void runTests() {
 
     const NetworkImage networkImage = NetworkImage(
       'https://www.example.com/images/frame8.png',
-      webImgElementStrategy: WebImgElementStrategy.always,
+      useImgElement: WebImgElementStrategy.always,
       headers: <String, String>{
         'flutter': 'flutter',
         'second': 'second',

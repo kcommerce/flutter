@@ -1426,6 +1426,9 @@ enum WebImgElementStrategy {
   whenNecessary,
 
   /// Always use <img> elements as long as `header` is empty.
+  ///
+  /// This strategy still fetches bytes if `header` is not empty, since <img>
+  /// elements do not support headers.
   always,
 }
 
@@ -1434,11 +1437,11 @@ enum WebImgElementStrategy {
 /// The image will be cached regardless of cache headers from the server.
 ///
 /// Typically this class resolves to an image stream that ultimately produces
-/// [dart:ui.Image]s. On the Web platform, the [webImgElementStrategy] parameter
+/// [dart:ui.Image]s. On the Web platform, the [useImgElement] parameter
 /// can be used to make the image stream ultimately produce an [WebImageInfo]
 /// instead, which makes [Image.network] display the image as an HTML <img>
-/// element in a platform view. The parameter is by default
-/// [WebImgElementStrategy.never]. See [Image.network] for more explanation.
+/// element in a platform view. The feature is by default turned off
+/// ([WebImgElementStrategy.never]). See [Image.network] for more explanation.
 ///
 /// See also:
 ///
@@ -1454,12 +1457,12 @@ abstract class NetworkImage extends ImageProvider<NetworkImage> {
   /// The [scale] argument is the linear scale factor for drawing this image at
   /// its intended size. See [ImageInfo.scale] for more information.
   ///
-  /// The [webImgElementStrategy] is by default [WebImgElementStrategy.never].
+  /// The [useImgElement] is by default [WebImgElementStrategy.never].
   const factory NetworkImage(
     String url, {
       double scale,
       Map<String, String>? headers,
-      WebImgElementStrategy webImgElementStrategy,
+      WebImgElementStrategy useImgElement,
     }) = network_image.NetworkImage;
 
   /// The URL from which the image will be fetched.
@@ -1482,7 +1485,7 @@ abstract class NetworkImage extends ImageProvider<NetworkImage> {
   /// Defaults to [WebImgElementStrategy.never].
   ///
   /// Has no effect on other platforms, which always fetch bytes.
-  WebImgElementStrategy get webImgElementStrategy;
+  WebImgElementStrategy get useImgElement;
 
   @override
   ImageStreamCompleter loadBuffer(NetworkImage key, DecoderBufferCallback decode);
