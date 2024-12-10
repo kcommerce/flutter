@@ -1407,12 +1407,14 @@ class ResizeImage extends ImageProvider<ResizeImageKey> {
   }
 }
 
-/// The strategy for [Image.network] to decide whether to use <img> elements in
-/// a platform view to display an image instead of fetching bytes.
+/// The strategy for [Image.network] and [NetworkImage] to decide whether to
+/// display images in <img> elements in a platform view instead of fetching
+/// bytes.
 ///
 /// See [Image.network] for more explanation on the impact.
 ///
-/// This option is only effective on the Web platform.
+/// This option is only effective on the Web platform. Other platforms always
+/// display network images by fetching bytes.
 enum WebImgElementStrategy {
   /// Never use <img> elements.
   never,
@@ -1432,13 +1434,11 @@ enum WebImgElementStrategy {
 /// The image will be cached regardless of cache headers from the server.
 ///
 /// Typically this class resolves to an image stream that ultimately produces
-/// [dart:ui.Image]s.
-///
-/// On the Web platform, the image stream might ultimately produce an
-/// [WebImageInfo] instead, which makes [Image.network] display the image as an
-/// HTML <img> element in a platform view. When this happens can be configured
-/// with [webImgElementStrategy], which is by default
-/// [WebImgElementStrategy.never].  See [Image.network] for more explanation.
+/// [dart:ui.Image]s. On the Web platform, the [webImgElementStrategy] parameter
+/// can be used to make the image stream ultimately produce an [WebImageInfo]
+/// instead, which makes [Image.network] display the image as an HTML <img>
+/// element in a platform view. The parameter is by default
+/// [WebImgElementStrategy.never]. See [Image.network] for more explanation.
 ///
 /// See also:
 ///
@@ -1453,7 +1453,6 @@ abstract class NetworkImage extends ImageProvider<NetworkImage> {
   ///
   /// The [scale] argument is the linear scale factor for drawing this image at
   /// its intended size. See [ImageInfo.scale] for more information.
-  ///
   ///
   /// The [webImgElementStrategy] is by default [WebImgElementStrategy.never].
   const factory NetworkImage(
@@ -1474,9 +1473,11 @@ abstract class NetworkImage extends ImageProvider<NetworkImage> {
   /// When running Flutter on the web, headers are not used.
   Map<String, String>? get headers;
 
-  /// Specifies when the image is loaded as a [WebImageInfo], which causes
-  /// [Image.network] to display the image in an HTML <img> tag in a platform
-  /// view. See [Image.network] for more explanation.
+  /// On the Web platform, specifies when the image is loaded as a
+  /// [WebImageInfo], which causes [Image.network] to display the image in an
+  /// HTML <img> tag in a platform view.
+  ///
+  /// See [Image.network] for more explanation.
   ///
   /// Defaults to [WebImgElementStrategy.never].
   WebImgElementStrategy get webImgElementStrategy;
