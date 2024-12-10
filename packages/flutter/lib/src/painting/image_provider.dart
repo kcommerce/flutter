@@ -1417,6 +1417,8 @@ class ResizeImage extends ImageProvider<ResizeImageKey> {
 /// display network images by fetching bytes.
 enum WebImgElementStrategy {
   /// Never use `<img>` elements.
+  ///
+  /// Fetch errors, including CORS errors, are reported.
   never,
 
   /// Use `<img>` elements when fetching bytes is not available.
