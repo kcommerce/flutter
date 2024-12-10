@@ -1480,6 +1480,8 @@ abstract class NetworkImage extends ImageProvider<NetworkImage> {
   /// See [Image.network] for more explanation.
   ///
   /// Defaults to [WebImgElementStrategy.never].
+  ///
+  /// Has no effect on other platforms, which always fetch bytes.
   WebImgElementStrategy get webImgElementStrategy;
 
   @override
