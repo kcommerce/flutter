@@ -1035,11 +1035,11 @@ void main() {
     tapAndDrag.addPointer(pointerDown);
     tester.closeArena(pointer.pointer);
     tester.route(pointerDown);
-    tester.route(pointer.move(const Offset(50.0, 10.0)));
-    tester.route(pointer.move(const Offset(90.0, 10.0)));
-    tester.route(pointer.move(const Offset(130.0, 10.0)));
+    tester.route(pointer.move(const Offset(50.0, 20.0)));
+    tester.route(pointer.move(const Offset(90.0, 30.0)));
+    tester.route(pointer.move(const Offset(120.0, 45.0)));
     tester.route(pointer.up());
 
-    expect(tapDragEndDetails.globalPosition, const Offset(130.0, 10.0));
+    expect(tapDragEndDetails.globalPosition, const Offset(120.0, 45.0));
   });
 }

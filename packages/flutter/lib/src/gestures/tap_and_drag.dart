@@ -1107,8 +1107,7 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
       _pastSlopTolerance = _pastSlopTolerance || _getGlobalDistance(event, _initialPosition) > computedSlop;
 
       if (_dragState == _DragState.accepted) {
-        final OffsetPair delta = _calculateDragUpdateDelta(event);
-        _updateCurrentPosition(delta);
+        _currentPosition = OffsetPair.fromEventPosition(event);
         _checkDragUpdate(event);
       } else if (_dragState == _DragState.possible) {
         if (_start == null) {
@@ -1178,10 +1177,6 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
     return OffsetPair(local: localDelta, global: globalUpdateDelta);
   }
 
-  void _updateCurrentPosition(OffsetPair delta) {
-    _currentPosition += delta;
-  }
-
   void _acceptDrag(PointerEvent event) {
     if (!_wonArenaForPrimaryPointer) {
       return;
@@ -1192,8 +1187,8 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
     }
     _checkDragStart(event);
     if (event.localDelta != Offset.zero) {
+      _currentPosition = OffsetPair.fromEventPosition(event);
       final OffsetPair delta = _calculateDragUpdateDelta(event);
-      _updateCurrentPosition(delta);
       _checkDragUpdate(event, corrected: _initialPosition + delta);
     }
   }
