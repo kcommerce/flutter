@@ -400,22 +400,24 @@ class Image extends StatefulWidget {
   /// and [cacheHeight] parameters are ignored as the web engine delegates
   /// image decoding to the web which does not support custom decode sizes.
   ///
-  /// ### Cross-origin images on Web
+  /// ### Same-origin policy on Web
   ///
   /// Due to browser restriction on Cross-Origin Resource Sharing (CORS),
   /// Flutter on the Web platform can not fetch images from other origins
   /// (domain, scheme, or port) than the origin that hosts the app, unless the
   /// image hosting origin explicitly allows so. CORS errors can be resolved
-  /// by configuring the image hosting server. More information on CORS can be
-  /// found at
+  /// by configuring the image hosting server. More information can be
+  /// found at Mozilla's introduction on
+  /// [same-origin policy](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy)
+  /// and
   /// [CORS errors](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS/Errors).
   ///
-  /// In case that configuring the host is not available, such as when images
+  /// If it's not possible to configure the host, such as when images
   /// are hosted on a CDN or from arbitrary URLs, the app can set the
   /// `useImgElement` parameter of [Image.network] to display the image
-  /// in an HTML <img> element, which bypasses the same-origin policy.
+  /// in an HTML `<img>` element, which bypasses the same-origin policy.
   ///
-  /// The <img> element is placed in a platform view, and therefore has the
+  /// The `<img>` element is placed in a platform view, and therefore has the
   /// following drawbacks:
   ///
   ///  * Suboptimal performance.

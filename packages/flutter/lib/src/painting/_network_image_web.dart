@@ -18,7 +18,7 @@ import 'image_stream.dart';
 /// used for testing purposes.
 typedef HttpRequestFactory = web.XMLHttpRequest Function();
 
-/// The type for an overridable factory function for creating <img> elements,
+/// The type for an overridable factory function for creating `<img>` elements,
 /// used for testing purposes.
 typedef ImgElementFactory = web.HTMLImageElement Function();
 
@@ -40,17 +40,17 @@ void debugRestoreHttpRequestFactory() {
   httpRequestFactory = _httpClient;
 }
 
-/// The default <img> element factory.
+/// The default `<img>` element factory.
 web.HTMLImageElement _imgElementFactory() {
   return web.document.createElement('img') as web.HTMLImageElement;
 }
 
-/// The factory function that creates <img> elements, can be overridden for
+/// The factory function that creates `<img>` elements, can be overridden for
 /// tests.
 @visibleForTesting
 ImgElementFactory imgElementFactory = _imgElementFactory;
 
-/// Restores the default <img> element factory.
+/// Restores the default `<img>` element factory.
 @visibleForTesting
 void debugRestoreImgElementFactory() {
   imgElementFactory = _imgElementFactory;

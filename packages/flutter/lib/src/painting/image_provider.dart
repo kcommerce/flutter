@@ -1408,7 +1408,7 @@ class ResizeImage extends ImageProvider<ResizeImageKey> {
 }
 
 /// The strategy for [Image.network] and [NetworkImage] to decide whether to
-/// display images in <img> elements in a platform view instead of fetching
+/// display images in `<img>` elements in a platform view instead of fetching
 /// bytes.
 ///
 /// See [Image.network] for more explanation on the impact.
@@ -1416,18 +1416,18 @@ class ResizeImage extends ImageProvider<ResizeImageKey> {
 /// This option is only effective on the Web platform. Other platforms always
 /// display network images by fetching bytes.
 enum WebImgElementStrategy {
-  /// Never use <img> elements.
+  /// Never use `<img>` elements.
   never,
 
-  /// Use <img> elements when fetching bytes is not available.
+  /// Use `<img>` elements when fetching bytes is not available.
   ///
-  /// This strategy uses <img> elements if `header` is empty and the fetch
+  /// This strategy uses `<img>` elements if `header` is empty and the fetch
   /// encounters errors.
   whenNecessary,
 
-  /// Always use <img> elements as long as `header` is empty.
+  /// Always use `<img>` elements as long as `header` is empty.
   ///
-  /// This strategy still fetches bytes if `header` is not empty, since <img>
+  /// This strategy still fetches bytes if `header` is not empty, since `<img>`
   /// elements do not support headers.
   always,
 }
@@ -1439,7 +1439,7 @@ enum WebImgElementStrategy {
 /// Typically this class resolves to an image stream that ultimately produces
 /// [dart:ui.Image]s. On the Web platform, the [useImgElement] parameter
 /// can be used to make the image stream ultimately produce an [WebImageInfo]
-/// instead, which makes [Image.network] display the image as an HTML <img>
+/// instead, which makes [Image.network] display the image as an HTML `<img>`
 /// element in a platform view. The feature is by default turned off
 /// ([WebImgElementStrategy.never]). See [Image.network] for more explanation.
 ///
@@ -1478,7 +1478,7 @@ abstract class NetworkImage extends ImageProvider<NetworkImage> {
 
   /// On the Web platform, specifies when the image is loaded as a
   /// [WebImageInfo], which causes [Image.network] to display the image in an
-  /// HTML <img> tag in a platform view.
+  /// HTML `<img>` tag in a platform view.
   ///
   /// See [Image.network] for more explanation.
   ///
