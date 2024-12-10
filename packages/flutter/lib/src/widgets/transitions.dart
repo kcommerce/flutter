@@ -154,6 +154,35 @@ class _AnimatedState extends State<AnimatedWidget> {
 /// Typically used as the argument for [ModalRoute.delegatedTransition].
 typedef DelegatedTransitionBuilder = Widget? Function(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, bool allowSnapshotting, Widget? child);
 
+mixin _RenderTransition<L extends Listenable> on RenderObject {
+  void _listener();
+
+  L get listenable => _listenable;
+  abstract L _listenable;
+  set listenable(L value) {
+    if (value == _listenable) {
+      return;
+    }
+    _listenable.removeListener(_listener);
+    _listenable = value;
+    if (attached) {
+      value.addListener(_listener..call());
+    }
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    listenable.addListener(_listener);
+  }
+
+  @override
+  void detach() {
+    listenable.removeListener(_listener);
+    super.detach();
+  }
+}
+
 /// Animates the position of a widget relative to its normal position.
 ///
 /// The translation is expressed as an [Offset] scaled to the child's size. For
@@ -971,35 +1000,21 @@ class AlignTransition extends SingleChildRenderObjectWidget {
   }
 }
 
-class _RenderAnimatedAlign extends RenderPositionedBox {
+class _RenderAnimatedAlign extends RenderPositionedBox with _RenderTransition<ValueListenable<AlignmentGeometry>> {
   _RenderAnimatedAlign({
     required ValueListenable<AlignmentGeometry> listenable,
     super.widthFactor,
     super.heightFactor,
     super.textDirection,
   }) : _listenable = listenable,
-       super(alignment: listenable.value) {
-    _listenable.addListener(_listener);
-  }
-
-  ValueListenable<AlignmentGeometry> get listenable => _listenable;
-  ValueListenable<AlignmentGeometry> _listenable;
-  set listenable(ValueListenable<AlignmentGeometry> newValue) {
-    if (newValue == _listenable) {
-      return;
-    }
-    _listenable.removeListener(_listener);
-    _listenable = newValue..addListener(_listener);
-  }
-
-  void _listener() {
-    alignment = _listenable.value;
-  }
+       super(alignment: listenable.value);
 
   @override
-  void dispose() {
-    _listenable.removeListener(_listener);
-    super.dispose();
+  ValueListenable<AlignmentGeometry> _listenable;
+
+  @override
+  void _listener() {
+    alignment = _listenable.value;
   }
 }
 
