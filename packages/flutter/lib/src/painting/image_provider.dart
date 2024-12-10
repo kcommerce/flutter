@@ -1421,13 +1421,13 @@ enum WebImgElementStrategy {
 
   /// Use `<img>` elements when fetching bytes is not available.
   ///
-  /// This strategy uses `<img>` elements if `header` is empty and the fetch
+  /// This strategy uses `<img>` elements if `headers` is empty and the fetch
   /// encounters errors.
   whenNecessary,
 
-  /// Always use `<img>` elements as long as `header` is empty.
+  /// Always use `<img>` elements as long as `headers` is empty.
   ///
-  /// This strategy still fetches bytes if `header` is not empty, since `<img>`
+  /// This strategy still fetches bytes if `headers` is not empty, since `<img>`
   /// elements do not support headers.
   always,
 }
