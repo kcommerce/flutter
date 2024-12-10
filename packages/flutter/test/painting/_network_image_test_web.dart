@@ -120,7 +120,7 @@ void runTests() {
       throw UnimplementedError();
     };
 
-    const NetworkImage networkImage = NetworkImage('https://www.example.com/images/frame5.png');
+    const NetworkImage networkImage = NetworkImage('https://www.example.com/images/frame4.png');
     ImageInfo? imageInfo;
     Object? recordedError;
     Completer<void>? imageCompleter;
@@ -159,7 +159,7 @@ void runTests() {
     };
 
     const NetworkImage networkImage = NetworkImage(
-      'https://www.example.com/images/frame4.png',
+      'https://www.example.com/images/frame5.png',
       webImgElementStrategy: WebImgElementStrategy.whenNecessary,
     );
     ImageInfo? imageInfo;
@@ -184,7 +184,7 @@ void runTests() {
     expect(imageInfo, isA<WebImageInfo>());
 
     final WebImageInfo webImageInfo = imageInfo! as WebImageInfo;
-    expect(webImageInfo.htmlImage.src, equals('https://www.example.com/images/frame4.png'));
+    expect(webImageInfo.htmlImage.src, equals('https://www.example.com/images/frame5.png'));
   }, skip: !isSkiaWeb);
 
   testWidgets('When strategy is .whenNecessary, emits an error if the image is cross-origin but fails to decode',
@@ -204,7 +204,7 @@ void runTests() {
     };
 
     const NetworkImage networkImage = NetworkImage(
-      'https://www.example.com/images/frame5.png',
+      'https://www.example.com/images/frame6.png',
       webImgElementStrategy: WebImgElementStrategy.whenNecessary,
     );
     ImageInfo? imageInfo;
@@ -246,7 +246,7 @@ void runTests() {
     };
 
     const NetworkImage networkImage = NetworkImage(
-      'https://www.example.com/images/frame6.png',
+      'https://www.example.com/images/frame7.png',
       webImgElementStrategy: WebImgElementStrategy.always,
     );
     ImageInfo? imageInfo;
@@ -271,7 +271,7 @@ void runTests() {
     expect(imageInfo, isA<WebImageInfo>());
 
     final WebImageInfo webImageInfo = imageInfo! as WebImageInfo;
-    expect(webImageInfo.htmlImage.src, equals('https://www.example.com/images/frame6.png'));
+    expect(webImageInfo.htmlImage.src, equals('https://www.example.com/images/frame7.png'));
   }, skip: !isSkiaWeb);
 
   testWidgets('When strategy is .always, emits a normal image if headers is not null',
@@ -291,7 +291,7 @@ void runTests() {
     };
 
     const NetworkImage networkImage = NetworkImage(
-      'https://www.example.com/images/frame7.png',
+      'https://www.example.com/images/frame8.png',
       webImgElementStrategy: WebImgElementStrategy.always,
       headers: <String, String>{
         'flutter': 'flutter',

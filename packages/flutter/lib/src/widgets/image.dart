@@ -405,24 +405,23 @@ class Image extends StatefulWidget {
   /// Due to browser restriction on Cross-Origin Resource Sharing (CORS),
   /// Flutter on the Web platform can not fetch images from other origins
   /// (domain, scheme, or port) than the origin that hosts the app, unless the
-  /// image hosting origin explicitly allows so. CORS errors can be resolved to
+  /// image hosting origin explicitly allows so. CORS errors can be resolved
   /// by configuring the image hosting server. More information on CORS can be
   /// found at
   /// [CORS errors](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS/Errors).
   ///
   /// In case that configuring the host is not available, such as when images
-  /// are hosted on a CDN or from arbitrary URLs, the app can use
-  /// `webImgElementStrategy` to allow [Image.network] to use an <img>
-  /// element to display the images, which bypasses the
-  /// same-origin policy.
+  /// are hosted on a CDN or from arbitrary URLs, the app can set the
+  /// `webImgElementStrategy` parameter of [Image.network] to display the image
+  /// in an HTML <img> element, which bypasses the same-origin policy.
   ///
   /// The <img> element is placed in a platform view, and therefore has the
   /// following drawbacks:
   ///
   ///  * Suboptimal performance.
   ///  * Can't be captured by screenshot widgets.
-  ///  * Can't use headers.
-  ///  * Can't use several image options, including [opacity], [colorBlendMode],
+  ///  * The `headers` argument must be null or empty.
+  ///  * Some image options are ignored, including [opacity], [colorBlendMode],
   ///    [repeat], filtering, and blurring.
   ///
   /// By default, this feature is turned off ([WebImgElementStrategy.never]).

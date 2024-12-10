@@ -1431,6 +1431,15 @@ enum WebImgElementStrategy {
 ///
 /// The image will be cached regardless of cache headers from the server.
 ///
+/// Typically this class resolves to an image stream that ultimately produces
+/// [dart:ui.Image]s.
+///
+/// On the Web platform, the image stream might ultimately produce an
+/// [WebImageInfo] instead, which makes [Image.network] display the image as an
+/// HTML <img> element in a platform view. When this happens can be configured
+/// with [webImgElementStrategy], which is by default
+/// [WebImgElementStrategy.never].  See [Image.network] for more explanation.
+///
 /// See also:
 ///
 ///  * [Image.network] for a shorthand of an [Image] widget backed by [NetworkImage].
@@ -1444,6 +1453,9 @@ abstract class NetworkImage extends ImageProvider<NetworkImage> {
   ///
   /// The [scale] argument is the linear scale factor for drawing this image at
   /// its intended size. See [ImageInfo.scale] for more information.
+  ///
+  ///
+  /// The [webImgElementStrategy] is by default [WebImgElementStrategy.never].
   const factory NetworkImage(
     String url, {
       double scale,
@@ -1462,6 +1474,11 @@ abstract class NetworkImage extends ImageProvider<NetworkImage> {
   /// When running Flutter on the web, headers are not used.
   Map<String, String>? get headers;
 
+  /// Specifies when the image is loaded as a [WebImageInfo], which causes
+  /// [Image.network] to display the image in an HTML <img> tag in a platform
+  /// view. See [Image.network] for more explanation.
+  ///
+  /// Defaults to [WebImgElementStrategy.never].
   WebImgElementStrategy get webImgElementStrategy;
 
   @override
