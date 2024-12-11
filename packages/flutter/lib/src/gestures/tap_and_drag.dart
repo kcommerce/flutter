@@ -1187,7 +1187,9 @@ sealed class BaseTapAndDragGestureRecognizer extends OneSequenceGestureRecognize
     }
     _checkDragStart(event);
     if (event.localDelta != Offset.zero) {
-      _currentPosition = OffsetPair.fromEventPosition(event);
+      if (_dragState == _DragState.accepted) {
+        _currentPosition = OffsetPair.fromEventPosition(event);
+      }
       final OffsetPair delta = _calculateDragUpdateDelta(event);
       _checkDragUpdate(event, corrected: _initialPosition + delta);
     }
