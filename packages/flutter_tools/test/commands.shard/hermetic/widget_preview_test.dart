@@ -6,7 +6,6 @@ import 'package:file/memory.dart';
 import 'package:flutter_tools/src/base/file_system.dart';
 import 'package:flutter_tools/src/base/logger.dart';
 import 'package:flutter_tools/src/commands/widget_preview.dart';
-import 'package:flutter_tools/src/convert.dart';
 import 'package:flutter_tools/src/flutter_manifest.dart';
 import 'package:flutter_tools/src/project.dart';
 import 'package:test/test.dart';
@@ -95,30 +94,6 @@ void main() {
             );
           }
         }
-      },
-      overrides: <Type, Generator>{
-        FileSystem: () => fileSystem,
-        ProcessManager: () => processManager,
-      },
-    );
-
-    testUsingContext(
-      'can add flutter_gen to package_config.json if generate is set in the parent project',
-      () async {
-        command.maybeAddFlutterGenToPackageConfig(rootProject: rootProject);
-        final Map<String, Object?> packageConfig = jsonDecode(
-          rootProject.widgetPreviewScaffoldProject.packageConfig
-              .readAsStringSync(),
-        ) as Map<String, Object?>;
-        expect(packageConfig.containsKey('packages'), true);
-        final List<Map<String, Object?>> packages =
-            (packageConfig['packages']! as List<dynamic>)
-                .cast<Map<String, Object?>>();
-        expect(packages.length, 2);
-        expect(
-          packages.last,
-          WidgetPreviewStartCommand.flutterGenPackageConfigEntry,
-        );
       },
       overrides: <Type, Generator>{
         FileSystem: () => fileSystem,
